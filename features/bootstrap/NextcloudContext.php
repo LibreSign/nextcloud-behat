@@ -15,13 +15,13 @@ use Psr\Http\Message\ResponseInterface;
  * Defines application features from the specific context.
  */
 class NextcloudContext implements Context {
-	private string $testPassword = '123456';
-	private string $adminPassword = 'admin';
+	protected string $testPassword = '123456';
+	protected string $adminPassword = 'admin';
 	private string $baseUrl;
 	private RunServerListener $server;
 	private ?string $currentUser = null;
 	private array $createdUsers = [];
-	private ResponseInterface $response;
+	protected ResponseInterface $response;
 	/** @var CookieJar */
 	private $cookieJars;
 
@@ -107,7 +107,13 @@ class NextcloudContext implements Context {
 
 	public function sendOCSRequest($verb, $url, $body = null, array $headers = []) {
 		$url = 'ocs/v2.php' . $url;
-		$this->sendRequest($verb, $url, $body, $headers);
+		if ($this->currentUser === 'admin') {
+			$options['auth'] = ['admin', $this->adminPassword];
+		} elseif (strpos($this->currentUser, 'guest') !== 0) {
+			$options['auth'] = [$this->currentUser, $this->testPassword];
+		}
+		$headers['OCS-ApiRequest'] = 'true';
+		$this->sendRequest($verb, $url, $body, $headers, $options);
 	}
 
 	/**
@@ -117,19 +123,21 @@ class NextcloudContext implements Context {
 	 * @param TableNode|array|null $body
 	 * @param array $headers
 	 */
-	public function sendRequest($verb, $url, $body = null, array $headers = []) {
+	public function sendRequest($verb, $url, $body = null, array $headers = [], array $options = []) {
 		$url = ltrim($url, '/');
 		if (strpos($url, 'ocs/v2.php') === false) {
 			$url = 'index.php/' . $url;
+			if ($this->currentUser === 'admin') {
+				$headers['Authorization'] = 'Basic ' . base64_encode('admin' . ':' . $this->adminPassword);
+			} elseif (strpos($this->currentUser, 'guest') !== 0) {
+				$headers['Authorization'] = 'Basic ' . base64_encode($this->currentUser . ':' . $this->testPassword);
+			}
 		}
-		$fullUrl = $this->baseUrl . $url;
 		$client = new Client();
-		$options = ['cookies' => $this->getUserCookieJar($this->currentUser)];
-		if ($this->currentUser === 'admin') {
-			$options['auth'] = ['admin', $this->adminPassword];
-		} elseif (strpos($this->currentUser, 'guest') !== 0) {
-			$options['auth'] = [$this->currentUser, $this->testPassword];
-		}
+		$options = array_merge(
+			['cookies' => $this->getUserCookieJar($this->currentUser)],
+			$options
+		);
 		if ($body instanceof TableNode) {
 			$fd = $body->getRowsHash();
 			$options['form_params'] = $fd;
@@ -138,11 +146,11 @@ class NextcloudContext implements Context {
 		}
 
 		$options['headers'] = array_merge($headers, [
-			'OCS-ApiRequest' => 'true',
 			'Accept' => 'application/json',
 		]);
 
 		try {
+			$fullUrl = $this->baseUrl . $url;
 			$this->response = $client->{$verb}($fullUrl, $options);
 		} catch (ClientException $ex) {
 			$this->response = $ex->getResponse();
