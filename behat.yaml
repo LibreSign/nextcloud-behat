@@ -1,0 +1,17 @@
+default:
+  autoload:
+    '': '%paths.base%/features/bootstrap'
+  suites:
+    default:
+      contexts:
+        - Libresign\NextcloudBehat\NextcloudContext:
+            parameters:
+              test_password: 123456
+              admin_password: admin
+      paths:
+        - '%paths.base%/features'
+  extensions:
+    PhpBuiltin\Server:
+      verbose: false
+      rootDir: /var/www/html
+      host: localhost
