@@ -1,0 +1,30 @@
+{
+    "name": "librecode/nextcloud-behat",
+    "description": "Basic steps for a Nextcloud app",
+    "keywords": [
+        "php",
+        "behat",
+        "nextcloud"
+    ],
+    "type": "library",
+    "license": "AGPL",
+    "prefer-stable": true,
+    "authors": [
+        {
+            "name": "Vitor Mattos",
+            "email": "vitor@php.rio"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "guzzlehttp/guzzle": "^7.4",
+        "phpunit/phpunit": "^9.5",
+        "behat/behat": "^3.10",
+        "libresign/behat-builtin-extension": "^0.3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Libresign\\NextcloudBehat\\": "features/bootstrap/"
+        }
+    }
+}
