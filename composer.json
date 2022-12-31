@@ -19,8 +19,8 @@
         "php": ">=7.4",
         "guzzlehttp/guzzle": "^7.4",
         "phpunit/phpunit": "^9.5",
-        "behat/behat": "^3.10",
-        "libresign/behat-builtin-extension": "^0.3.0"
+        "behat/behat": "^3.12",
+        "libresign/behat-builtin-extension": "^0.4.3"
     },
     "autoload": {
         "psr-4": {
