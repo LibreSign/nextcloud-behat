@@ -18,16 +18,16 @@ use Psr\Http\Message\ResponseInterface;
 class NextcloudApiContext implements Context {
 	protected string $testPassword = '123456';
 	protected string $adminPassword = 'admin';
-	private string $baseUrl;
-	private RunServerListener $server;
-	private ?string $currentUser = null;
+	protected string $baseUrl;
+	protected RunServerListener $server;
+	protected ?string $currentUser = null;
 	/**
 	 * @var string[]
 	 */
-	private array $createdUsers = [];
+	protected array $createdUsers = [];
 	protected ResponseInterface $response;
 	/** @var CookieJar[] */
-	private $cookieJars;
+	protected $cookieJars;
 
 	public function __construct(?array $parameters = []) {
 		$this->server = RunServerListener::getInstance();
@@ -120,7 +120,7 @@ class NextcloudApiContext implements Context {
 		$options = [];
 		if ($this->currentUser === 'admin') {
 			$options['auth'] = ['admin', $this->adminPassword];
-		} elseif ($this->currentUser && strpos($this->currentUser, 'guest') !== 0) {
+		} elseif ($this->currentUser) {
 			$options['auth'] = [$this->currentUser, $this->testPassword];
 		}
 		$headers['OCS-ApiRequest'] = 'true';
@@ -128,22 +128,13 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
-	 * @When sending :verb to :url with
+	 * @When sending :verb to :url
 	 * @param string $verb
 	 * @param string $url
 	 * @param TableNode|array|null $body
 	 * @param array $headers
 	 */
 	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
-		$url = ltrim($url, '/');
-		if (strpos($url, 'ocs/v2.php') === false) {
-			$url = 'index.php/' . $url;
-			if ($this->currentUser === 'admin') {
-				$headers['Authorization'] = 'Basic ' . base64_encode('admin' . ':' . $this->adminPassword);
-			} elseif ($this->currentUser && strpos($this->currentUser, 'guest') !== 0) {
-				$headers['Authorization'] = 'Basic ' . base64_encode($this->currentUser . ':' . $this->testPassword);
-			}
-		}
 		$client = new Client();
 		if ($this->currentUser) {
 			$options = array_merge(
@@ -153,7 +144,7 @@ class NextcloudApiContext implements Context {
 		}
 		if ($body instanceof TableNode) {
 			$fd = $body->getRowsHash();
-			$options['form_params'] = $fd;
+			$options['form_params'] = $this->decodeIfIsJsonString($fd);
 		} elseif (is_array($body)) {
 			$options['form_params'] = $body;
 		}
@@ -163,6 +154,8 @@ class NextcloudApiContext implements Context {
 		]);
 
 		try {
+			$url = $this->hydrateUrl($url);
+			$url = ltrim($url, '/');
 			$fullUrl = $this->baseUrl . $url;
 			$this->response = $client->{$verb}($fullUrl, $options);
 		} catch (ClientException $ex) {
@@ -170,6 +163,20 @@ class NextcloudApiContext implements Context {
 		} catch (\GuzzleHttp\Exception\ServerException $ex) {
 			$this->response = $ex->getResponse();
 		}
+	}
+
+	protected function hydrateUrl(string $url): string {
+		return $url;
+	}
+
+	protected function decodeIfIsJsonString(array $list): array {
+		foreach ($list as $key => $value) {
+			$decoded = json_decode($value);
+			if (json_last_error() == JSON_ERROR_NONE) {
+				$list[$key] = $decoded;
+			}
+		}
+		return $list;
 	}
 
 	protected function getUserCookieJar(string $user): CookieJar {

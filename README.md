@@ -15,15 +15,17 @@ default:
   suites:
     default:
       contexts:
-        - Libresign\NextcloudBehat\NextcloudContext:
+        - Libresign\NextcloudBehat\NextcloudApiContext:
             parameters:
               # default value
               test_password: 123456
               # default value
               admin_password: admin
+      # Only necessary if you want to have a different features folder
       paths:
         - '%paths.base%/features'
   extensions:
+    # Use this extension to start the server
     PhpBuiltin\Server:
       verbose: false
       rootDir: /var/www/html
@@ -35,7 +37,7 @@ Create the file `tests/features/bootstrap/FeatureContext.php` with this content:
 
 use Libresign\NextcloudBehat;
 
-class FeatureContext extends NextcloudContext {
+class FeatureContext extends NextcloudApiContext {
 
 }
 ```
