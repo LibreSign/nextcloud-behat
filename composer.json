@@ -46,7 +46,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Libresign\\NextcloudBehat\\": "features/bootstrap/"
+            "Libresign\\NextcloudBehat\\": "src/"
         }
     }
 }

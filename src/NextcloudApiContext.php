@@ -15,7 +15,7 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Defines application features from the specific context.
  */
-class NextcloudContext implements Context {
+class NextcloudApiContext implements Context {
 	protected string $testPassword = '123456';
 	protected string $adminPassword = 'admin';
 	private string $baseUrl;
