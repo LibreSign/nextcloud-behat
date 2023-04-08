@@ -30,9 +30,9 @@
         ]
     },
     "require": {
-        "php": ">=7.4",
-        "guzzlehttp/guzzle": "^7.4",
-        "phpunit/phpunit": "^9.5",
+        "php": ">=8.0",
+        "guzzlehttp/guzzle": "^7.5",
+        "phpunit/phpunit": "^9.6",
         "behat/behat": "^3.12",
         "libresign/behat-builtin-extension": "^0.4.3"
     },
