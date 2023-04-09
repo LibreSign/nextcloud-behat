@@ -8,6 +8,7 @@
 >
     <projectFiles>
         <directory name="features/bootstrap" />
+        <directory name="src" />
         <ignoreFiles>
             <directory name="vendor" />
         </ignoreFiles>

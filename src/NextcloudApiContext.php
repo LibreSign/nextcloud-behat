@@ -15,21 +15,23 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Defines application features from the specific context.
  */
-class NextcloudContext implements Context {
+class NextcloudApiContext implements Context
+{
 	protected string $testPassword = '123456';
 	protected string $adminPassword = 'admin';
-	private string $baseUrl;
-	private RunServerListener $server;
-	private ?string $currentUser = null;
+	protected string $baseUrl;
+	protected RunServerListener $server;
+	protected ?string $currentUser = null;
 	/**
 	 * @var string[]
 	 */
-	private array $createdUsers = [];
+	protected array $createdUsers = [];
 	protected ResponseInterface $response;
 	/** @var CookieJar[] */
-	private $cookieJars;
+	protected $cookieJars;
 
-	public function __construct(?array $parameters = []) {
+	public function __construct(?array $parameters = [])
+	{
 		$this->server = RunServerListener::getInstance();
 		$this->baseUrl = RunServerListener::getServerRoot();
 		$this->response = new Response();
@@ -45,7 +47,8 @@ class NextcloudContext implements Context {
 	/**
 	 * @BeforeScenario
 	 */
-	public function setUp(): void {
+	public function setUp(): void
+	{
 		$this->createdUsers = [];
 	}
 
@@ -53,7 +56,8 @@ class NextcloudContext implements Context {
 	 * @Given as user :user
 	 * @param string $user
 	 */
-	public function setCurrentUser(?string $user): void {
+	public function setCurrentUser(?string $user): void
+	{
 		$this->currentUser = $user;
 	}
 
@@ -61,7 +65,8 @@ class NextcloudContext implements Context {
 	 * @Given user :user exists
 	 * @param string $user
 	 */
-	public function assureUserExists(string $user): void {
+	public function assureUserExists(string $user): void
+	{
 		$response = $this->userExists($user);
 		if ($response->getStatusCode() !== 200) {
 			$this->createUser($user);
@@ -73,7 +78,8 @@ class NextcloudContext implements Context {
 		}
 	}
 
-	private function userExists(string $user): ResponseInterface {
+	private function userExists(string $user): ResponseInterface
+	{
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('GET', '/cloud/users/' . $user);
@@ -81,7 +87,8 @@ class NextcloudContext implements Context {
 		return $this->response;
 	}
 
-	private function createUser(string $user): void {
+	private function createUser(string $user): void
+	{
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('POST', '/cloud/users', [
@@ -100,7 +107,8 @@ class NextcloudContext implements Context {
 		$this->setCurrentUser($currentUser);
 	}
 
-	private function setUserDisplayName(string $user): void {
+	private function setUserDisplayName(string $user): void
+	{
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('PUT', '/cloud/users/' . $user, [
@@ -115,12 +123,13 @@ class NextcloudContext implements Context {
 	 * @param string $url
 	 * @param TableNode|array|null $body
 	 */
-	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = []): void {
+	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = []): void
+	{
 		$url = 'ocs/v2.php' . $url;
 		$options = [];
 		if ($this->currentUser === 'admin') {
 			$options['auth'] = ['admin', $this->adminPassword];
-		} elseif ($this->currentUser && strpos($this->currentUser, 'guest') !== 0) {
+		} elseif ($this->currentUser) {
 			$options['auth'] = [$this->currentUser, $this->testPassword];
 		}
 		$headers['OCS-ApiRequest'] = 'true';
@@ -128,22 +137,14 @@ class NextcloudContext implements Context {
 	}
 
 	/**
-	 * @When sending :verb to :url with
+	 * @When sending :verb to :url
 	 * @param string $verb
 	 * @param string $url
 	 * @param TableNode|array|null $body
 	 * @param array $headers
 	 */
-	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
-		$url = ltrim($url, '/');
-		if (strpos($url, 'ocs/v2.php') === false) {
-			$url = 'index.php/' . $url;
-			if ($this->currentUser === 'admin') {
-				$headers['Authorization'] = 'Basic ' . base64_encode('admin' . ':' . $this->adminPassword);
-			} elseif ($this->currentUser && strpos($this->currentUser, 'guest') !== 0) {
-				$headers['Authorization'] = 'Basic ' . base64_encode($this->currentUser . ':' . $this->testPassword);
-			}
-		}
+	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void
+	{
 		$client = new Client();
 		if ($this->currentUser) {
 			$options = array_merge(
@@ -153,7 +154,7 @@ class NextcloudContext implements Context {
 		}
 		if ($body instanceof TableNode) {
 			$fd = $body->getRowsHash();
-			$options['form_params'] = $fd;
+			$options['form_params'] = $this->decodeIfIsJsonString($fd);
 		} elseif (is_array($body)) {
 			$options['form_params'] = $body;
 		}
@@ -163,6 +164,8 @@ class NextcloudContext implements Context {
 		]);
 
 		try {
+			$url = $this->hydrateUrl($url);
+			$url = ltrim($url, '/');
 			$fullUrl = $this->baseUrl . $url;
 			$this->response = $client->{$verb}($fullUrl, $options);
 		} catch (ClientException $ex) {
@@ -172,7 +175,24 @@ class NextcloudContext implements Context {
 		}
 	}
 
-	protected function getUserCookieJar(string $user): CookieJar {
+	protected function hydrateUrl(string $url): string
+	{
+		return $url;
+	}
+
+	protected function decodeIfIsJsonString(array $list): array
+	{
+		foreach ($list as $key => $value) {
+			$decoded = json_decode($value);
+			if (json_last_error() == JSON_ERROR_NONE) {
+				$list[$key] = $decoded;
+			}
+		}
+		return $list;
+	}
+
+	protected function getUserCookieJar(string $user): CookieJar
+	{
 		if (!isset($this->cookieJars[$user])) {
 			$this->cookieJars[$user] = new CookieJar();
 		}
@@ -184,7 +204,8 @@ class NextcloudContext implements Context {
 	 * @param int $statusCode
 	 * @param string $message
 	 */
-	protected function assertStatusCode(ResponseInterface $response, int $statusCode, string $message = ''): void {
+	protected function assertStatusCode(ResponseInterface $response, int $statusCode, string $message = ''): void
+	{
 		Assert::assertEquals($statusCode, $response->getStatusCode(), $message);
 	}
 
@@ -193,7 +214,8 @@ class NextcloudContext implements Context {
 	 * @param string $code
 	 * @throws \InvalidArgumentException
 	 */
-	public function theResponseShouldHaveStatusCode($code): void {
+	public function theResponseShouldHaveStatusCode($code): void
+	{
 		$currentCode = $this->response->getStatusCode();
 		Assert::assertEquals($code, $currentCode);
 	}
@@ -203,7 +225,8 @@ class NextcloudContext implements Context {
 	 * @param TableNode $table
 	 * @throws \InvalidArgumentException
 	 */
-	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
+	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void
+	{
 		$this->response->getBody()->seek(0);
 		$expectedValues = $table->getColumnsHash();
 		$realResponseArray = json_decode($this->response->getBody()->getContents(), true);
@@ -216,13 +239,15 @@ class NextcloudContext implements Context {
 	/**
 	 * @AfterScenario
 	 */
-	public function tearDown(): void {
+	public function tearDown(): void
+	{
 		foreach ($this->createdUsers as $user) {
 			$this->deleteUser($user);
 		}
 	}
 
-	private function deleteUser(string $user): ResponseInterface {
+	private function deleteUser(string $user): ResponseInterface
+	{
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('DELETE', '/cloud/users/' . $user);
