@@ -29,6 +29,7 @@ class NextcloudApiContext implements Context
 	protected ResponseInterface $response;
 	/** @var CookieJar[] */
 	protected $cookieJars;
+	protected array $requestOptions = [];
 
 	public function __construct(?array $parameters = [])
 	{
@@ -78,7 +79,7 @@ class NextcloudApiContext implements Context
 		}
 	}
 
-	private function userExists(string $user): ResponseInterface
+	protected function userExists(string $user): ResponseInterface
 	{
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
@@ -87,7 +88,7 @@ class NextcloudApiContext implements Context
 		return $this->response;
 	}
 
-	private function createUser(string $user): void
+	protected function createUser(string $user): void
 	{
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
@@ -107,13 +108,25 @@ class NextcloudApiContext implements Context
 		$this->setCurrentUser($currentUser);
 	}
 
-	private function setUserDisplayName(string $user): void
+	protected function setUserDisplayName(string $user): void
 	{
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('PUT', '/cloud/users/' . $user, [
 			'key' => 'displayname',
 			'value' => $user . '-displayname'
+		]);
+		$this->setCurrentUser($currentUser);
+	}
+
+	/** @Given /^set the email of user "([^"]*)" to "([^"]*)"$/  */
+	public function setUserEmail(string $user, string $email): void
+	{
+		$currentUser = $this->currentUser;
+		$this->setCurrentUser('admin');
+		$this->sendOCSRequest('PUT', '/cloud/users/' . $user, [
+			'key' => 'email',
+			'value' => $email
 		]);
 		$this->setCurrentUser($currentUser);
 	}
@@ -125,15 +138,9 @@ class NextcloudApiContext implements Context
 	 */
 	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = []): void
 	{
-		$url = 'ocs/v2.php' . $url;
-		$options = [];
-		if ($this->currentUser === 'admin') {
-			$options['auth'] = ['admin', $this->adminPassword];
-		} elseif ($this->currentUser) {
-			$options['auth'] = [$this->currentUser, $this->testPassword];
-		}
+		$url = '/ocs/v2.php' . $url;
 		$headers['OCS-ApiRequest'] = 'true';
-		$this->sendRequest($verb, $url, $body, $headers, $options);
+		$this->sendRequest($verb, $url, $body, $headers);
 	}
 
 	/**
@@ -145,6 +152,16 @@ class NextcloudApiContext implements Context
 	 */
 	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void
 	{
+		if (!str_starts_with($url, '/')) {
+			$url = '/' . $url;
+		}
+		if (strpos($url, '/ocs/v2.php') === false) {
+			$url = '/index.php' . $url;
+		}
+		if (str_ends_with($this->baseUrl, '/')) {
+			$this->baseUrl = rtrim($this->baseUrl, '/');
+		}
+		$fullUrl = $this->baseUrl . $url;
 		$client = new Client();
 		if ($this->currentUser) {
 			$options = array_merge(
@@ -162,11 +179,15 @@ class NextcloudApiContext implements Context
 		$options['headers'] = array_merge($headers, [
 			'Accept' => 'application/json',
 		]);
+		if ($this->currentUser === 'admin') {
+			$options['auth'] = ['admin', $this->adminPassword];
+		} elseif ($this->currentUser) {
+			$options['auth'] = [$this->currentUser, $this->testPassword];
+		}
 
 		try {
-			$url = $this->hydrateUrl($url);
-			$url = ltrim($url, '/');
-			$fullUrl = $this->baseUrl . $url;
+			$this->requestOptions = $options;
+			list($fullUrl, $options) = $this->beforeRequest($fullUrl, $options);
 			$this->response = $client->{$verb}($fullUrl, $options);
 		} catch (ClientException $ex) {
 			$this->response = $ex->getResponse();
@@ -175,9 +196,9 @@ class NextcloudApiContext implements Context
 		}
 	}
 
-	protected function hydrateUrl(string $url): string
+	protected function beforeRequest(string $fullUrl, array $options): array
 	{
-		return $url;
+		return [$fullUrl, $options];
 	}
 
 	protected function decodeIfIsJsonString(array $list): array
@@ -246,7 +267,7 @@ class NextcloudApiContext implements Context
 		}
 	}
 
-	private function deleteUser(string $user): ResponseInterface
+	protected function deleteUser(string $user): ResponseInterface
 	{
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
