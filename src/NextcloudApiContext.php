@@ -4,6 +4,7 @@ namespace Libresign\NextcloudBehat;
 
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\TableNode;
+use DOMDocument;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
@@ -204,12 +205,17 @@ class NextcloudApiContext implements Context
 	protected function decodeIfIsJsonString(array $list): array
 	{
 		foreach ($list as $key => $value) {
-			$decoded = json_decode($value);
-			if (json_last_error() == JSON_ERROR_NONE) {
-				$list[$key] = $decoded;
+			if ($this->isJson($value)) {
+				$list[$key] = json_decode($value);
 			}
 		}
 		return $list;
+	}
+
+	private function isJson(string $string): bool
+	{
+		json_decode($string);
+		return json_last_error() === JSON_ERROR_NONE;
 	}
 
 	protected function getUserCookieJar(string $user): CookieJar
@@ -255,6 +261,51 @@ class NextcloudApiContext implements Context
 			$actualJson = json_encode($realResponseArray[$value['key']]);
 			Assert::assertJsonStringEqualsJsonString($value['value'], $actualJson);
 		}
+	}
+
+	/**
+	 * @Given the response should contain the initial state :name with the following values:
+	 */
+	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, TableNode $table): void
+	{
+		$html = $this->response->getBody()->getContents();
+		$dom = new DOMDocument();
+		if (empty($html) || !$dom->loadHTML($html)) {
+			throw new \Exception('The response is not HTML');
+		}
+		$element = $dom->getElementById('initial-state-' . $name);
+		if (!$element) {
+			throw new \Exception('Initial state not found: '. $name);
+		}
+		$base64 = $element->getAttribute('value');
+		$jsonString = base64_decode($base64);
+		$initialState = json_decode($jsonString, true);
+		if (is_string($initialState)) {
+			$expected = $table->getRow(0)[0];
+			Assert::assertEquals($expected, $initialState);
+		} if (is_array($initialState)) {
+			$expectedValues = $table->getColumnsHash();
+			foreach ($expectedValues as $value) {
+				Assert::assertArrayHasKey(
+					$value['key'],
+					$initialState,
+					'The initial state have not the key \'' . $value['key'] . '\''
+				);
+				if ($this->isJson($value['value'])) {
+					$actualJson = json_encode($initialState[$value['key']]);
+					$expected = $this->parseText($value['value']);
+				} else {
+					$actualJson = json_encode($initialState[$value['key']]);
+					$expected = json_encode($this->parseText($value['value']));
+				}
+				Assert::assertJsonStringEqualsJsonString($expected, $actualJson);
+			}
+		}
+	}
+
+	protected function parseText(string $text): string
+	{
+		return $text;
 	}
 
 	/**

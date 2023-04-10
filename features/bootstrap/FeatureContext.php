@@ -1,7 +1,9 @@
 <?php
 
+use Behat\Gherkin\Node\TableNode;
 use donatj\MockWebServer\MockWebServer;
 use donatj\MockWebServer\RequestInfo;
+use GuzzleHttp\Psr7\Response;
 use Libresign\NextcloudBehat\NextcloudApiContext;
 use PHPUnit\Framework\Assert;
 
@@ -77,5 +79,37 @@ class FeatureContext extends NextcloudApiContext
 		if (array_key_exists('form_params', $this->requestOptions)) {
 			Assert::assertEquals($this->requestOptions['form_params'], $lastRequest->getParsedInput());
 		}
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, TableNode $table): void
+	{
+		switch ($name) {
+			case 'appid-string':
+				$value = base64_encode($table->getRow(0)[0]);
+				break;
+			case 'appid-json-object':
+				$value = base64_encode(json_encode(['fruit' => 'orange']));
+				break;
+			case 'appid-json-array':
+				$value = base64_encode(json_encode(['orange']));
+				break;
+			default:
+				$value = '';
+		}
+		$this->response = new Response(
+			200,
+			[],
+			<<<HTML
+			<html>
+				<body>
+					<input type="hidden" id="initial-state-{$name}" value="{$value}">
+				</body>
+			</html>
+			HTML
+		);
+		parent::theResponseShouldContainTheInitialStateWithTheFollowingValues($name, $table);
 	}
 }
