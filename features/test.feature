@@ -3,3 +3,4 @@ Feature: Test this extension
     Given as user "test"
     And user test exists
     And sending "POST" to "/"
+      | status | 1 |
