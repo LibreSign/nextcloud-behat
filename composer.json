@@ -32,7 +32,7 @@
         ]
     },
     "require": {
-        "php": ">=8.0",
+        "php": ">=7.4",
         "guzzlehttp/guzzle": "^7.5",
         "phpunit/phpunit": "^9.6",
         "behat/behat": "^3.12",
