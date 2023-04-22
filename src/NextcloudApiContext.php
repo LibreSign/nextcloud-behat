@@ -16,8 +16,7 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Defines application features from the specific context.
  */
-class NextcloudApiContext implements Context
-{
+class NextcloudApiContext implements Context {
 	protected string $testPassword = '123456';
 	protected string $adminPassword = 'admin';
 	protected string $baseUrl;
@@ -32,8 +31,7 @@ class NextcloudApiContext implements Context
 	protected $cookieJars;
 	protected array $requestOptions = [];
 
-	public function __construct(?array $parameters = [])
-	{
+	public function __construct(?array $parameters = []) {
 		$this->server = RunServerListener::getInstance();
 		$this->baseUrl = RunServerListener::getServerRoot();
 		$this->response = new Response();
@@ -49,8 +47,7 @@ class NextcloudApiContext implements Context
 	/**
 	 * @BeforeScenario
 	 */
-	public function setUp(): void
-	{
+	public function setUp(): void {
 		$this->createdUsers = [];
 	}
 
@@ -58,8 +55,7 @@ class NextcloudApiContext implements Context
 	 * @Given as user :user
 	 * @param string $user
 	 */
-	public function setCurrentUser(?string $user): void
-	{
+	public function setCurrentUser(?string $user): void {
 		$this->currentUser = $user;
 	}
 
@@ -67,8 +63,7 @@ class NextcloudApiContext implements Context
 	 * @Given user :user exists
 	 * @param string $user
 	 */
-	public function assureUserExists(string $user): void
-	{
+	public function assureUserExists(string $user): void {
 		$response = $this->userExists($user);
 		if ($response->getStatusCode() !== 200) {
 			$this->createUser($user);
@@ -80,8 +75,7 @@ class NextcloudApiContext implements Context
 		}
 	}
 
-	protected function userExists(string $user): ResponseInterface
-	{
+	protected function userExists(string $user): ResponseInterface {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('GET', '/cloud/users/' . $user);
@@ -89,8 +83,7 @@ class NextcloudApiContext implements Context
 		return $this->response;
 	}
 
-	protected function createUser(string $user): void
-	{
+	protected function createUser(string $user): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('POST', '/cloud/users', [
@@ -109,8 +102,7 @@ class NextcloudApiContext implements Context
 		$this->setCurrentUser($currentUser);
 	}
 
-	protected function setUserDisplayName(string $user): void
-	{
+	protected function setUserDisplayName(string $user): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('PUT', '/cloud/users/' . $user, [
@@ -121,8 +113,7 @@ class NextcloudApiContext implements Context
 	}
 
 	/** @Given /^set the email of user "([^"]*)" to "([^"]*)"$/  */
-	public function setUserEmail(string $user, string $email): void
-	{
+	public function setUserEmail(string $user, string $email): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('PUT', '/cloud/users/' . $user, [
@@ -137,8 +128,7 @@ class NextcloudApiContext implements Context
 	 * @param string $url
 	 * @param TableNode|array|null $body
 	 */
-	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = []): void
-	{
+	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = []): void {
 		$url = '/ocs/v2.php' . $url;
 		$headers['OCS-ApiRequest'] = 'true';
 		$this->sendRequest($verb, $url, $body, $headers);
@@ -151,8 +141,7 @@ class NextcloudApiContext implements Context
 	 * @param TableNode|array|null $body
 	 * @param array $headers
 	 */
-	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void
-	{
+	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		if (!str_starts_with($url, '/')) {
 			$url = '/' . $url;
 		}
@@ -197,13 +186,11 @@ class NextcloudApiContext implements Context
 		}
 	}
 
-	protected function beforeRequest(string $fullUrl, array $options): array
-	{
+	protected function beforeRequest(string $fullUrl, array $options): array {
 		return [$fullUrl, $options];
 	}
 
-	protected function decodeIfIsJsonString(array $list): array
-	{
+	protected function decodeIfIsJsonString(array $list): array {
 		foreach ($list as $key => $value) {
 			if ($this->isJson($value)) {
 				$list[$key] = json_decode($value);
@@ -212,14 +199,12 @@ class NextcloudApiContext implements Context
 		return $list;
 	}
 
-	private function isJson(string $string): bool
-	{
+	private function isJson(string $string): bool {
 		json_decode($string);
 		return json_last_error() === JSON_ERROR_NONE;
 	}
 
-	protected function getUserCookieJar(string $user): CookieJar
-	{
+	protected function getUserCookieJar(string $user): CookieJar {
 		if (!isset($this->cookieJars[$user])) {
 			$this->cookieJars[$user] = new CookieJar();
 		}
@@ -231,8 +216,7 @@ class NextcloudApiContext implements Context
 	 * @param int $statusCode
 	 * @param string $message
 	 */
-	protected function assertStatusCode(ResponseInterface $response, int $statusCode, string $message = ''): void
-	{
+	protected function assertStatusCode(ResponseInterface $response, int $statusCode, string $message = ''): void {
 		Assert::assertEquals($statusCode, $response->getStatusCode(), $message);
 	}
 
@@ -241,8 +225,7 @@ class NextcloudApiContext implements Context
 	 * @param string $code
 	 * @throws \InvalidArgumentException
 	 */
-	public function theResponseShouldHaveStatusCode($code): void
-	{
+	public function theResponseShouldHaveStatusCode($code): void {
 		$currentCode = $this->response->getStatusCode();
 		Assert::assertEquals($code, $currentCode);
 	}
@@ -252,8 +235,7 @@ class NextcloudApiContext implements Context
 	 * @param TableNode $table
 	 * @throws \InvalidArgumentException
 	 */
-	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void
-	{
+	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
 		$this->response->getBody()->seek(0);
 		$expectedValues = $table->getColumnsHash();
 		$realResponseArray = json_decode($this->response->getBody()->getContents(), true);
@@ -266,8 +248,7 @@ class NextcloudApiContext implements Context
 	/**
 	 * @Given the response should contain the initial state :name with the following values:
 	 */
-	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, TableNode $table): void
-	{
+	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, TableNode $table): void {
 		$html = $this->response->getBody()->getContents();
 		$dom = new DOMDocument();
 		if (empty($html) || !$dom->loadHTML($html)) {
@@ -303,23 +284,36 @@ class NextcloudApiContext implements Context
 		}
 	}
 
-	protected function parseText(string $text): string
-	{
+	/**
+	 * @Given the following :appId app config is set
+	 *
+	 * @param TableNode $formData
+	 */
+	public function setAppConfig(string $appId, TableNode $formData): void {
+		$currentUser = $this->currentUser;
+		$this->setCurrentUser('admin');
+		foreach ($formData->getRows() as $row) {
+			$this->sendOCSRequest('POST', '/apps/provisioning_api/api/v1/config/apps/' . $appId . '/' . $row[0], [
+				'value' => $row[1],
+			]);
+		}
+		$this->setCurrentUser($currentUser);
+	}
+
+	protected function parseText(string $text): string {
 		return $text;
 	}
 
 	/**
 	 * @AfterScenario
 	 */
-	public function tearDown(): void
-	{
+	public function tearDown(): void {
 		foreach ($this->createdUsers as $user) {
 			$this->deleteUser($user);
 		}
 	}
 
-	protected function deleteUser(string $user): ResponseInterface
-	{
+	protected function deleteUser(string $user): ResponseInterface {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('DELETE', '/cloud/users/' . $user);

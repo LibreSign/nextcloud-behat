@@ -9,11 +9,9 @@ use PHPUnit\Framework\Assert;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
-class FeatureContext extends NextcloudApiContext
-{
+class FeatureContext extends NextcloudApiContext {
 	protected MockWebServer $mockServer;
-	public function __construct(?array $parameters = [])
-	{
+	public function __construct(?array $parameters = []) {
 		parent::__construct($parameters);
 		$this->mockServer = new MockWebServer();
 		$this->mockServer->start();
@@ -23,8 +21,7 @@ class FeatureContext extends NextcloudApiContext
 	/**
 	 * @inheritDoc
 	 */
-	public function setCurrentUser(?string $user): void
-	{
+	public function setCurrentUser(?string $user): void {
 		parent::setCurrentUser($user);
 		Assert::assertEquals($this->currentUser, $user);
 	}
@@ -32,8 +29,7 @@ class FeatureContext extends NextcloudApiContext
 	/**
 	 * @inheritDoc
 	 */
-	public function assureUserExists(string $user): void
-	{
+	public function assureUserExists(string $user): void {
 		parent::assureUserExists($user);
 		$lastRequest = $this->getLastREquest();
 		$headers = $lastRequest->getHeaders();
@@ -45,8 +41,7 @@ class FeatureContext extends NextcloudApiContext
 		Assert::assertEquals('application/json', $headers['Accept']);
 	}
 
-	private function getLastRequest(): RequestInfo
-	{
+	private function getLastRequest(): RequestInfo {
 		$lastRequest = $this->mockServer->getLastRequest();
 		if (!$lastRequest instanceof RequestInfo) {
 			throw new Exception('Invalid response');
@@ -57,8 +52,7 @@ class FeatureContext extends NextcloudApiContext
 	/**
 	 * @inheritDoc
 	 */
-	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void
-	{
+	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		parent::sendRequest($verb, $url, $body, $headers, $options);
 		$lastRequest = $this->getLastRequest();
 
@@ -84,8 +78,7 @@ class FeatureContext extends NextcloudApiContext
 	/**
 	 * @inheritDoc
 	 */
-	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, TableNode $table): void
-	{
+	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, TableNode $table): void {
 		switch ($name) {
 			case 'appid-string':
 				$value = base64_encode($table->getRow(0)[0]);
