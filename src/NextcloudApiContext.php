@@ -124,14 +124,15 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
+	 * @When sending :verb to ocs :url
 	 * @param string $verb
 	 * @param string $url
 	 * @param TableNode|array|null $body
 	 */
-	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = []): void {
+	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		$url = '/ocs/v2.php' . $url;
 		$headers['OCS-ApiRequest'] = 'true';
-		$this->sendRequest($verb, $url, $body, $headers);
+		$this->sendRequest($verb, $url, $body, $headers, $options);
 	}
 
 	/**
