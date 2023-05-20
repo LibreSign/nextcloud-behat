@@ -3,6 +3,7 @@
 namespace Libresign\NextcloudBehat;
 
 use Behat\Behat\Context\Context;
+use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
 use DOMDocument;
 use GuzzleHttp\Client;
@@ -249,7 +250,7 @@ class NextcloudApiContext implements Context {
 	/**
 	 * @Given the response should contain the initial state :name with the following values:
 	 */
-	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, TableNode $table): void {
+	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
 		$html = $this->response->getBody()->getContents();
 		$dom = new DOMDocument();
 		// https://www.php.net/manual/en/domdocument.loadhtml.php#95463
@@ -262,28 +263,11 @@ class NextcloudApiContext implements Context {
 			throw new \Exception('Initial state not found: '. $name);
 		}
 		$base64 = $element->getAttribute('value');
-		$jsonString = base64_decode($base64);
-		$initialState = json_decode($jsonString, true);
-		if (is_string($initialState)) {
-			$expected = $table->getRow(0)[0];
-			Assert::assertEquals($expected, $initialState);
-		} if (is_array($initialState)) {
-			$expectedValues = $table->getColumnsHash();
-			foreach ($expectedValues as $value) {
-				Assert::assertArrayHasKey(
-					$value['key'],
-					$initialState,
-					'The initial state have not the key \'' . $value['key'] . '\''
-				);
-				if ($this->isJson($value['value'])) {
-					$actualJson = json_encode($initialState[$value['key']]);
-					$expected = $this->parseText($value['value']);
-				} else {
-					$actualJson = json_encode($initialState[$value['key']]);
-					$expected = json_encode($this->parseText($value['value']));
-				}
-				Assert::assertJsonStringEqualsJsonString($expected, $actualJson);
-			}
+		$actual = base64_decode($base64);
+		if ($this->isJson($expected)) {
+			Assert::assertJsonStringEqualsJsonString($expected, $actual);
+		} else {
+			Assert::assertEquals((string) $expected, $actual);
 		}
 	}
 
