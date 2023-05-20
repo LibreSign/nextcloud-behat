@@ -252,6 +252,8 @@ class NextcloudApiContext implements Context {
 	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, TableNode $table): void {
 		$html = $this->response->getBody()->getContents();
 		$dom = new DOMDocument();
+		// https://www.php.net/manual/en/domdocument.loadhtml.php#95463
+		libxml_use_internal_errors(true);
 		if (empty($html) || !$dom->loadHTML($html)) {
 			throw new \Exception('The response is not HTML');
 		}
