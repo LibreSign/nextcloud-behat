@@ -53,7 +53,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
-	 * @Given as user :user
+	 * @When as user :user
 	 * @param string $user
 	 */
 	public function setCurrentUser(?string $user): void {
@@ -61,7 +61,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
-	 * @Given user :user exists
+	 * @When user :user exists
 	 * @param string $user
 	 */
 	public function assureUserExists(string $user): void {
@@ -113,7 +113,7 @@ class NextcloudApiContext implements Context {
 		$this->setCurrentUser($currentUser);
 	}
 
-	/** @Given /^set the email of user "([^"]*)" to "([^"]*)"$/  */
+	/** @When /^set the email of user "([^"]*)" to "([^"]*)"$/  */
 	public function setUserEmail(string $user, string $email): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
@@ -162,7 +162,8 @@ class NextcloudApiContext implements Context {
 			);
 		}
 		if ($body instanceof TableNode) {
-			$options['form_params'] = $body->getRowsHash();
+			$fd = $body->getRowsHash();
+			$options['form_params'] = $this->decodeIfIsJsonString($fd);
 		} elseif (is_array($body)) {
 			$options['form_params'] = $body;
 		}
@@ -191,6 +192,18 @@ class NextcloudApiContext implements Context {
 		return [$fullUrl, $options];
 	}
 
+	protected function decodeIfIsJsonString(array $list): array {
+		foreach ($list as $key => $value) {
+			if ($this->isJson($value)) {
+				$list[$key] = json_decode($value);
+			}
+			if (str_starts_with($value, '(string)')) {
+				$list[$key] = substr($value, strlen('(string)'));
+			}
+		}
+		return $list;
+	}
+
 	private function isJson(string $string): bool {
 		json_decode($string);
 		return json_last_error() === JSON_ERROR_NONE;
@@ -213,7 +226,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
-	 * @Then the response should have a status code :code
+	 * @When the response should have a status code :code
 	 * @param string $code
 	 * @throws \InvalidArgumentException
 	 */
@@ -223,7 +236,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
-	 * @Then the response should be a JSON array with the following mandatory values
+	 * @When the response should be a JSON array with the following mandatory values
 	 * @param TableNode $table
 	 * @throws \InvalidArgumentException
 	 */
@@ -238,7 +251,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
-	 * @Given the response should contain the initial state :name with the following values:
+	 * @When the response should contain the initial state :name with the following values:
 	 */
 	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
 		$html = $this->response->getBody()->getContents();
@@ -262,7 +275,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
-	 * @Given the following :appId app config is set
+	 * @When the following :appId app config is set
 	 *
 	 * @param TableNode $formData
 	 */
