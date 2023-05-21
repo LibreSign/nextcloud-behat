@@ -162,8 +162,7 @@ class NextcloudApiContext implements Context {
 			);
 		}
 		if ($body instanceof TableNode) {
-			$fd = $body->getRowsHash();
-			$options['form_params'] = $this->decodeIfIsJsonString($fd);
+			$options['form_params'] = $body->getRowsHash();
 		} elseif (is_array($body)) {
 			$options['form_params'] = $body;
 		}
@@ -190,15 +189,6 @@ class NextcloudApiContext implements Context {
 
 	protected function beforeRequest(string $fullUrl, array $options): array {
 		return [$fullUrl, $options];
-	}
-
-	protected function decodeIfIsJsonString(array $list): array {
-		foreach ($list as $key => $value) {
-			if ($this->isJson($value)) {
-				$list[$key] = json_decode($value);
-			}
-		}
-		return $list;
 	}
 
 	private function isJson(string $string): bool {
