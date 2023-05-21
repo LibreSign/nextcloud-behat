@@ -1,5 +1,6 @@
 <?php
 
+use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
 use donatj\MockWebServer\MockWebServer;
 use donatj\MockWebServer\RequestInfo;
@@ -78,10 +79,10 @@ class FeatureContext extends NextcloudApiContext {
 	/**
 	 * @inheritDoc
 	 */
-	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, TableNode $table): void {
+	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
 		switch ($name) {
 			case 'appid-string':
-				$value = base64_encode($table->getRow(0)[0]);
+				$value = base64_encode($expected);
 				break;
 			case 'appid-json-object':
 				$value = base64_encode(json_encode(['fruit' => 'orange']));
@@ -103,6 +104,6 @@ class FeatureContext extends NextcloudApiContext {
 			</html>
 			HTML
 		);
-		parent::theResponseShouldContainTheInitialStateWithTheFollowingValues($name, $table);
+		parent::theResponseShouldContainTheInitialStateWithTheFollowingValues($name, $expected);
 	}
 }
