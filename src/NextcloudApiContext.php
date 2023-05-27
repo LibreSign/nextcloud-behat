@@ -267,6 +267,7 @@ class NextcloudApiContext implements Context {
 		}
 		$base64 = $element->getAttribute('value');
 		$actual = base64_decode($base64);
+		$expected = $this->parseText($expected);
 		if ($this->isJson($expected)) {
 			Assert::assertJsonStringEqualsJsonString($expected, $actual);
 		} else {
