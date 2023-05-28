@@ -5,16 +5,29 @@ Feature: Test this extension
     And sending "POST" to "/"
       | status | 1 |
     And the response should contain the initial state "appid-string" with the following values:
-      | default |
+      """
+      default
+      """
     And the response should contain the initial state "appid-string" with the following values:
-      | true |
+      """
+      true
+      """
     And the response should contain the initial state "appid-string" with the following values:
-      | null |
+      """
+      null
+      """
     And the response should contain the initial state "appid-string" with the following values:
-      | |
+      """
+      """
     And the response should contain the initial state "appid-json-object" with the following values:
-      | key | value |
-      | fruit | orange |
+      """
+      {
+        "fruit": "orange"
+      }
+      """
     And the response should contain the initial state "appid-json-array" with the following values:
-      | key | value |
-      | 0 | orange |
+      """
+      [
+        "orange"
+      ]
+      """

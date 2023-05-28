@@ -1,7 +1,6 @@
 <?php
 
 use Behat\Gherkin\Node\PyStringNode;
-use Behat\Gherkin\Node\TableNode;
 use donatj\MockWebServer\MockWebServer;
 use donatj\MockWebServer\RequestInfo;
 use GuzzleHttp\Psr7\Response;
@@ -82,7 +81,7 @@ class FeatureContext extends NextcloudApiContext {
 	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
 		switch ($name) {
 			case 'appid-string':
-				$value = base64_encode($expected);
+				$value = base64_encode((string) $expected);
 				break;
 			case 'appid-json-object':
 				$value = base64_encode(json_encode(['fruit' => 'orange']));
