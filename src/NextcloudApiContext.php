@@ -204,7 +204,7 @@ class NextcloudApiContext implements Context {
 		return $list;
 	}
 
-	private function isJson(string $string): bool {
+	protected function isJson(string $string): bool {
 		json_decode($string);
 		return json_last_error() === JSON_ERROR_NONE;
 	}
