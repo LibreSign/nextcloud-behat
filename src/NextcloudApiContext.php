@@ -245,8 +245,13 @@ class NextcloudApiContext implements Context {
 		$expectedValues = $table->getColumnsHash();
 		$realResponseArray = json_decode($this->response->getBody()->getContents(), true);
 		foreach ($expectedValues as $value) {
-			$actualJson = json_encode($realResponseArray[$value['key']]);
-			Assert::assertJsonStringEqualsJsonString($value['value'], $actualJson);
+			if ($this->isJson($realResponseArray[$value['key']]) || is_bool($realResponseArray[$value['key']])) {
+				$actualJson = json_encode($realResponseArray[$value['key']]);
+				Assert::assertJsonStringEqualsJsonString($value['value'], $actualJson, 'Key: ' . $value['key']);
+				continue;
+			}
+			$actual = $realResponseArray[$value['key']];
+			Assert::assertEquals($value['value'], $actual, 'Key: ' . $value['key']);
 		}
 	}
 
