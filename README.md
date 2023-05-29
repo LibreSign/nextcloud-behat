@@ -51,11 +51,11 @@ vendor/bin/behat -dl
 When as user :user
 When user :user exists
 When sending :verb to :url
+When the response should be a JSON array with the following mandatory values
 When the response should contain the initial state :name with the following values:
 When /^set the email of user "([^"]*)" to "([^"]*)"$/
 When sending :verb to ocs :url
 When the response should have a status code :code
-When the response should be a JSON array with the following mandatory values
 When the following :appId app config is set
 ```
 
@@ -81,3 +81,20 @@ When sending "post" to ocs "/apps/libresign/api/v1/request-signature"
 ```
 
 By this way you will receive on your controller method 2 values, status as integer and file as array.
+
+## Parse initial state
+If you need to parse the initial state to use placeholder or get any value from current initial state, implement a method `parseText` like this:
+```php
+protected function parseText(string $text): string {
+  $patterns = [
+    '/<SIGN_UUID>/',
+    '/<FILE_UUID>/',
+  ];
+  $replacements = [
+    $this->signer['sign_uuid'] ?? null,
+    $this->file['uuid'] ?? $this->getFileUuidFromText($text),
+  ];
+  $text = preg_replace($patterns, $replacements, $text);
+  return $text;
+}
+```
