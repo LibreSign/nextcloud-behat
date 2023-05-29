@@ -1,8 +1,10 @@
 <?php
 
 use Behat\Gherkin\Node\PyStringNode;
+use Behat\Gherkin\Node\TableNode;
 use donatj\MockWebServer\MockWebServer;
 use donatj\MockWebServer\RequestInfo;
+use donatj\MockWebServer\Response as MockWebServerResponse;
 use GuzzleHttp\Psr7\Response;
 use Libresign\NextcloudBehat\NextcloudApiContext;
 use PHPUnit\Framework\Assert;
@@ -73,6 +75,18 @@ class FeatureContext extends NextcloudApiContext {
 		if (array_key_exists('form_params', $this->requestOptions)) {
 			Assert::assertEquals($this->requestOptions['form_params'], $lastRequest->getParsedInput());
 		}
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
+		$lastRequest = $this->getLastRequest();
+		// Mock response to be equal to body of request
+		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
+			json_encode($lastRequest->getParsedInput())
+		));
+		parent::theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues($table);
 	}
 
 	/**
