@@ -45,7 +45,14 @@
     "config": {
         "allow-plugins": {
             "bamarni/composer-bin-plugin": true
-        }
+        },
+        "optimize-autoloader": true
+    },
+    "extra": {
+      "bamarni-bin": {
+        "bin-links": true,
+        "forward-command": true
+      }
     },
     "autoload": {
         "psr-4": {
