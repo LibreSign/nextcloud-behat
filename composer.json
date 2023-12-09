@@ -32,11 +32,11 @@
         ]
     },
     "require": {
-        "php": ">=7.4",
-        "guzzlehttp/guzzle": "^7.5",
+        "php": ">=8.0",
+        "guzzlehttp/guzzle": "^7.8",
         "phpunit/phpunit": "^9.6",
-        "behat/behat": "^3.12",
-        "libresign/behat-builtin-extension": "^0.5.0"
+        "behat/behat": "^3.13",
+        "libresign/behat-builtin-extension": "^0.6.0"
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.8",
