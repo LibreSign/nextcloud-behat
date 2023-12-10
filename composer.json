@@ -36,7 +36,7 @@
         "guzzlehttp/guzzle": "^7.8",
         "phpunit/phpunit": "^9.6",
         "behat/behat": "^3.13",
-        "libresign/behat-builtin-extension": "^0.6.0"
+        "libresign/behat-builtin-extension": "^0.6.1"
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.8",
