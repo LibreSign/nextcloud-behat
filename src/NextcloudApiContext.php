@@ -268,6 +268,7 @@ class NextcloudApiContext implements Context {
 	 * @When the response should contain the initial state :name with the following values:
 	 */
 	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
+		$this->response->getBody()->seek(0);
 		$html = $this->response->getBody()->getContents();
 		$dom = new DOMDocument();
 		// https://www.php.net/manual/en/domdocument.loadhtml.php#95463
