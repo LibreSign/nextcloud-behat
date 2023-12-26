@@ -37,6 +37,12 @@ Feature: Test this extension
       default
       """
 
+  Scenario: Test initial state with string
+    Then the response should contain the initial state "appid-string" with the following values:
+      """
+      "text as json string"
+      """
+
   Scenario: Test initial state with boolean
     Then the response should contain the initial state "appid-string" with the following values:
       """
