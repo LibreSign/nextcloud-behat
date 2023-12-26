@@ -286,6 +286,10 @@ class NextcloudApiContext implements Context {
 		if ($this->isJson($expected)) {
 			Assert::assertJsonStringEqualsJsonString($expected, $actual);
 		} else {
+			if (trim($actual, '"') === json_decode($actual) && str_starts_with($actual, '"')) {
+				$actual = trim($actual, '"');
+				$expected = trim($expected, '"');
+			}
 			Assert::assertEquals($expected, $actual);
 		}
 	}
