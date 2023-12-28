@@ -244,6 +244,7 @@ class NextcloudApiContext implements Context {
 		$this->response->getBody()->seek(0);
 		$expectedValues = $table->getColumnsHash();
 		$realResponseArray = json_decode($this->response->getBody()->getContents(), true);
+		Assert::assertIsArray($realResponseArray, 'The response is not a JSON array');
 		foreach ($expectedValues as $value) {
 			Assert::assertArrayHasKey(
 				$value['key'],
