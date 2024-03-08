@@ -22,7 +22,7 @@ class NextcloudApiContext implements Context {
 	protected string $adminPassword = 'admin';
 	protected string $baseUrl;
 	protected RunServerListener $server;
-	protected ?string $currentUser = null;
+	protected string $currentUser = '';
 	/**
 	 * @var string[]
 	 */
@@ -56,7 +56,7 @@ class NextcloudApiContext implements Context {
 	 * @When as user :user
 	 * @param string $user
 	 */
-	public function setCurrentUser(?string $user): void {
+	public function setCurrentUser(string $user): void {
 		$this->currentUser = $user;
 	}
 
@@ -103,7 +103,8 @@ class NextcloudApiContext implements Context {
 		$this->setCurrentUser($currentUser);
 	}
 
-	protected function setUserDisplayName(string $user): void {
+	/** @When /^set the display name of user "([^"]*)" to "([^"]*)"$/  */
+	public function setUserDisplayName(string $user): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
 		$this->sendOCSRequest('PUT', '/cloud/users/' . $user, [
@@ -155,7 +156,7 @@ class NextcloudApiContext implements Context {
 		}
 		$fullUrl = $this->baseUrl . $url;
 		$client = new Client();
-		if ($this->currentUser) {
+		if (!empty($this->currentUser)) {
 			$options = array_merge(
 				['cookies' => $this->getUserCookieJar($this->currentUser)],
 				$options

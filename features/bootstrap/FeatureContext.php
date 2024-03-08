@@ -23,7 +23,7 @@ class FeatureContext extends NextcloudApiContext {
 	/**
 	 * @inheritDoc
 	 */
-	public function setCurrentUser(?string $user): void {
+	public function setCurrentUser(string $user): void {
 		parent::setCurrentUser($user);
 		Assert::assertEquals($this->currentUser, $user);
 	}

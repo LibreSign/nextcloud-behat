@@ -53,6 +53,7 @@ When user :user exists
 When sending :verb to :url
 When the response should be a JSON array with the following mandatory values
 When the response should contain the initial state :name with the following values:
+When /^set the display name of user "([^"]*)" to "([^"]*)"$/
 When /^set the email of user "([^"]*)" to "([^"]*)"$/
 When sending :verb to ocs :url
 When the response should have a status code :code
