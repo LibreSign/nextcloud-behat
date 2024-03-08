@@ -233,7 +233,7 @@ class NextcloudApiContext implements Context {
 	 */
 	public function theResponseShouldHaveStatusCode($code): void {
 		$currentCode = $this->response->getStatusCode();
-		Assert::assertEquals($code, $currentCode);
+		Assert::assertEquals($code, $currentCode, $this->response->getBody()->getContents());
 	}
 
 	/**
@@ -245,7 +245,8 @@ class NextcloudApiContext implements Context {
 		$this->response->getBody()->seek(0);
 		$expectedValues = $table->getColumnsHash();
 		$realResponseArray = json_decode($this->response->getBody()->getContents(), true);
-		Assert::assertIsArray($realResponseArray, 'The response is not a JSON array');
+		$this->response->getBody()->seek(0);
+		Assert::assertIsArray($realResponseArray, 'The response is not a JSON array: ' . $this->response->getBody()->getContents());
 		foreach ($expectedValues as $value) {
 			Assert::assertArrayHasKey(
 				$value['key'],
