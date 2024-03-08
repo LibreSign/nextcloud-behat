@@ -104,12 +104,13 @@ class NextcloudApiContext implements Context {
 	}
 
 	/** @When /^set the display name of user "([^"]*)" to "([^"]*)"$/  */
-	public function setUserDisplayName(string $user): void {
+	public function setUserDisplayName(string $user, ?string $displayName = null): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
+		$displayName = $displayName ?? $user . '-displayname';
 		$this->sendOCSRequest('PUT', '/cloud/users/' . $user, [
 			'key' => 'displayname',
-			'value' => $user . '-displayname'
+			'value' => $displayName,
 		]);
 		$this->setCurrentUser($currentUser);
 	}
