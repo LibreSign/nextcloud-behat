@@ -81,7 +81,26 @@ When sending "post" to ocs "/apps/libresign/api/v1/request-signature"
   | file | {"base64":""} |
 ```
 
-By this way you will receive on your controller method 2 values, status as integer and file as array.
+## Parse response using jq
+
+You can use [jq](https://jqlang.github.io/jq/manual/) expression casting to check a value in a json response body of a request. To do this you will need to install the jq command.
+
+Example:
+
+```gherkin
+When set the response to:
+  """
+  {
+    "Foo": {
+      "Bar": "33"
+    }
+  }
+  """
+And sending "POST" to "/"
+Then the response should be a JSON array with the following mandatory values
+  | key | value            |
+  | Foo | (jq).Bar == "33" |
+```
 
 ## Parse initial state
 If you need to parse the initial state to use placeholder or get any value from current initial state, implement a method `parseText` like this:

@@ -78,6 +78,16 @@ class FeatureContext extends NextcloudApiContext {
 	}
 
 	/**
+	 * @when set the response to:
+	 */
+	public function setTheResponseTo(PyStringNode $response): void {
+		// Mock response to be equal to body of request
+		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
+			(string) $response
+		));
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
@@ -87,36 +97,5 @@ class FeatureContext extends NextcloudApiContext {
 			json_encode($lastRequest->getParsedInput())
 		));
 		parent::theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues($table);
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
-		switch ($name) {
-			case 'appid-string':
-				$value = base64_encode((string) $expected);
-				break;
-			case 'appid-json-object':
-				$value = base64_encode(json_encode(['fruit' => 'orange']));
-				break;
-			case 'appid-json-array':
-				$value = base64_encode(json_encode(['orange']));
-				break;
-			default:
-				$value = '';
-		}
-		$this->response = new Response(
-			200,
-			[],
-			<<<HTML
-			<html>
-				<body>
-					<input type="hidden" id="initial-state-{$name}" value="{$value}">
-				</body>
-			</html>
-			HTML
-		);
-		parent::theResponseShouldContainTheInitialStateWithTheFollowingValues($name, $expected);
 	}
 }
