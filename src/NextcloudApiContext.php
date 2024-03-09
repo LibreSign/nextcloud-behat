@@ -254,18 +254,33 @@ class NextcloudApiContext implements Context {
 				$realResponseArray,
 				'Not found: "' . $value['key'] . '" at array: ' . json_encode($realResponseArray)
 			);
+			$actual = $realResponseArray[$value['key']];
+			if (str_starts_with($value['value'], '(jq)')) {
+				$expected = substr($value['value'], 4);
+				$this->validateAsJsonQuery($expected, json_encode($actual));
+				continue;
+			}
 			if (is_bool($realResponseArray[$value['key']])
 				|| is_iterable($realResponseArray[$value['key']])
 				|| is_numeric($realResponseArray[$value['key']])
 				|| (is_string($realResponseArray[$value['key']]) && $this->isJson($realResponseArray[$value['key']]))
 			) {
-				$actualJson = json_encode($realResponseArray[$value['key']]);
-				Assert::assertJsonStringEqualsJsonString($value['value'], $actualJson, 'Key: ' . $value['key']);
+				$actual = json_encode($actual);
+				Assert::assertJsonStringEqualsJsonString($value['value'], $actual, 'Key: ' . $value['key']);
 				continue;
 			}
-			$actual = $realResponseArray[$value['key']];
 			Assert::assertEquals($value['value'], $actual, 'Key: ' . $value['key']);
 		}
+	}
+
+	private function validateAsJsonQuery(string $expected, $actual) {
+		$return = shell_exec('which jq');
+		if (empty($return)) {
+			throw new \InvalidArgumentException('Is necessary install the jq command to use jq');
+		}
+		$jq = \JsonQueryWrapper\JsonQueryFactory::createWith($actual);
+		$result = $jq->run($expected);
+		Assert::assertTrue($result, 'The jq "' . $expected . '" do not match with: ' . $actual);
 	}
 
 	/**

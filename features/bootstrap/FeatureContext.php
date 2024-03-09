@@ -78,6 +78,16 @@ class FeatureContext extends NextcloudApiContext {
 	}
 
 	/**
+	 * @when set the response to:
+	 */
+	public function setTheResponseTo(PyStringNode $response): void {
+		// Mock response to be equal to body of request
+		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
+			(string) $response
+		));
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
