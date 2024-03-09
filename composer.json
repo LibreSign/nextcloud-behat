@@ -20,7 +20,7 @@
         "cs:check": "php-cs-fixer fix --dry-run --diff",
         "cs:fix": "php-cs-fixer fix",
         "psalm": "psalm --threads=1",
-        "psalm:update-baseline": "psalm --threads=1 --update-baseline --set-baseline=tests/psalm-baseline.xml",
+        "psalm:update-baseline": "psalm --threads=1 --update-baseline --set-baseline=psalm-baseline.xml",
         "psalm:clear": "psalm --clear-cache && psalm --clear-global-cache",
         "post-install-cmd": [
           "@composer bin all install --ansi",

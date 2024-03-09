@@ -273,9 +273,8 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	private function validateAsJsonQuery(string $expected, $actual) {
-		$return = shell_exec('which jq');
-		if (empty($return)) {
+	private function validateAsJsonQuery(string $expected, string $actual): void {
+		if (!`which jq`) {
 			throw new \InvalidArgumentException('Is necessary install the jq command to use jq');
 		}
 		$jq = \JsonQueryWrapper\JsonQueryFactory::createWith($actual);
