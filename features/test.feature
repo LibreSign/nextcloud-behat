@@ -62,35 +62,89 @@ Feature: Test this extension
       | Foo | (jq).Bar == "33" |
 
   Scenario: Test initial state with string
+    When set the response to:
+      """
+      <html>
+        <body>
+          <input type="hidden" id="initial-state-appid-string" value="ZGVmYXVsdA==">
+        </body>
+      </html>
+      """
+    And sending "POST" to "/"
     Then the response should contain the initial state "appid-string" with the following values:
       """
       default
       """
 
   Scenario: Test initial state with string
+    When set the response to:
+      """
+      <html>
+        <body>
+          <input type="hidden" id="initial-state-appid-string" value="InRleHQgYXMganNvbiBzdHJpbmci">
+        </body>
+      </html>
+      """
+    And sending "POST" to "/"
     Then the response should contain the initial state "appid-string" with the following values:
       """
       "text as json string"
       """
 
   Scenario: Test initial state with boolean
+    When set the response to:
+      """
+      <html>
+        <body>
+          <input type="hidden" id="initial-state-appid-string" value="dHJ1ZQ==">
+        </body>
+      </html>
+      """
+    And sending "POST" to "/"
     Then the response should contain the initial state "appid-string" with the following values:
       """
       true
       """
 
   Scenario: Test initial state with null
+    When set the response to:
+      """
+      <html>
+        <body>
+          <input type="hidden" id="initial-state-appid-string" value="bnVsbA==">
+        </body>
+      </html>
+      """
+    And sending "POST" to "/"
     Then the response should contain the initial state "appid-string" with the following values:
       """
       null
       """
 
   Scenario: Test initial state with empty
+    When set the response to:
+      """
+      <html>
+        <body>
+          <input type="hidden" id="initial-state-appid-string" value="">
+        </body>
+      </html>
+      """
+    And sending "POST" to "/"
     Then the response should contain the initial state "appid-string" with the following values:
       """
       """
 
   Scenario: Test initial state with json
+    When set the response to:
+      """
+      <html>
+        <body>
+          <input type="hidden" id="initial-state-appid-json-object" value="eyJmcnVpdCI6ICJvcmFuZ2UifQ==">
+        </body>
+      </html>
+      """
+    And sending "POST" to "/"
     Then the response should contain the initial state "appid-json-object" with the following values:
       """
       {
@@ -99,6 +153,15 @@ Feature: Test this extension
       """
 
   Scenario: Test initial state with array
+    When set the response to:
+      """
+      <html>
+        <body>
+          <input type="hidden" id="initial-state-appid-json-array" value="WyJvcmFuZ2UiXQ==">
+        </body>
+      </html>
+      """
+    And sending "POST" to "/"
     Then the response should contain the initial state "appid-json-array" with the following values:
       """
       [
