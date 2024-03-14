@@ -245,32 +245,58 @@ class NextcloudApiContext implements Context {
 	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
 		$this->response->getBody()->seek(0);
 		$expectedValues = $table->getColumnsHash();
-		$realResponseArray = json_decode($this->response->getBody()->getContents(), true);
+		$json = $this->response->getBody()->getContents();
 		$this->response->getBody()->seek(0);
-		Assert::assertIsArray($realResponseArray, 'The response is not a JSON array: ' . $this->response->getBody()->getContents());
 		foreach ($expectedValues as $value) {
-			Assert::assertArrayHasKey(
-				$value['key'],
-				$realResponseArray,
-				'Not found: "' . $value['key'] . '" at array: ' . json_encode($realResponseArray)
-			);
-			$actual = $realResponseArray[$value['key']];
+			$actual = $this->testAndGetActualValue($value, $json);
+			// Test actual value
 			if (str_starts_with($value['value'], '(jq)')) {
 				$expected = substr($value['value'], 4);
-				$this->validateAsJsonQuery($expected, json_encode($actual));
+				$this->validateAsJsonQuery($expected, $actual);
 				continue;
 			}
-			if (is_bool($realResponseArray[$value['key']])
-				|| is_iterable($realResponseArray[$value['key']])
-				|| is_numeric($realResponseArray[$value['key']])
-				|| (is_string($realResponseArray[$value['key']]) && $this->isJson($realResponseArray[$value['key']]))
-			) {
-				$actual = json_encode($actual);
+			if ($this->isJson($actual)) {
 				Assert::assertJsonStringEqualsJsonString($value['value'], $actual, 'Key: ' . $value['key']);
 				continue;
 			}
 			Assert::assertEquals($value['value'], $actual, 'Key: ' . $value['key']);
 		}
+	}
+
+	private function testAndGetActualValue(array $value, string $json): string {
+		$realResponseArray = json_decode($json, true);
+		Assert::assertIsArray($realResponseArray, 'The response is not a JSON array: ' . $json);
+		if (str_starts_with($value['key'], '(jq)')) {
+			$actual = $this->evalJsonQuery(
+				substr($value['key'], 4),
+				$json
+			);
+			Assert::assertNotEmpty($actual,
+				"The follow JsonQuery returned empty value: " . $value['key']
+			);
+			if (!is_string($actual)) {
+				$actual = json_encode($actual);
+			}
+			return $actual;
+		}
+		Assert::assertArrayHasKey(
+			$value['key'],
+			$realResponseArray,
+			'Not found: "' . $value['key'] . '" at array: ' . json_encode($realResponseArray)
+		);
+		$actual = $realResponseArray[$value['key']];
+		if (!is_string($actual)) {
+			$actual = json_encode($actual);
+		}
+		return $actual;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	private function evalJsonQuery(string $jsonQuery, string $target) {
+		$jq = \JsonQueryWrapper\JsonQueryFactory::createWith($target);
+		return $jq->run($jsonQuery);
 	}
 
 	private function validateAsJsonQuery(string $expected, string $actual): void {

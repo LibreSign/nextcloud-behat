@@ -58,8 +58,11 @@ Feature: Test this extension
       """
     And sending "POST" to "/"
     Then the response should be a JSON array with the following mandatory values
-      | key | value            |
-      | Foo | (jq).Bar == "33" |
+      | key          | value            |
+      | Foo          | (jq).Bar == "33" |
+      | (jq).Foo     | {"Bar":"33"}     |
+      | (jq).Foo     | (jq).Bar == "33" |
+      | (jq).Foo.Bar | 33               |
 
   Scenario: Test initial state with string
     When set the response to:
