@@ -295,14 +295,13 @@ class NextcloudApiContext implements Context {
 	 * @return mixed
 	 */
 	private function evalJsonQuery(string $jsonQuery, string $target) {
+		Assert::assertNotEmpty(`which jq`, 'Is necessary install the jq command to use jq');
 		$jq = \JsonQueryWrapper\JsonQueryFactory::createWith($target);
 		return $jq->run($jsonQuery);
 	}
 
 	private function validateAsJsonQuery(string $expected, string $actual): void {
-		if (!`which jq`) {
-			throw new \InvalidArgumentException('Is necessary install the jq command to use jq');
-		}
+		Assert::assertNotEmpty(`which jq`, 'Is necessary install the jq command to use jq');
 		$jq = \JsonQueryWrapper\JsonQueryFactory::createWith($actual);
 		$result = $jq->run($expected);
 		Assert::assertTrue($result, 'The jq "' . $expected . '" do not match with: ' . $actual);
