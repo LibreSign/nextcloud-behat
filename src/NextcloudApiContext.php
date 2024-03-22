@@ -181,8 +181,8 @@ class NextcloudApiContext implements Context {
 		}
 
 		try {
-			$this->requestOptions = $options;
 			list($fullUrl, $options) = $this->beforeRequest($fullUrl, $options);
+			$this->requestOptions = $options;
 			$this->response = $client->{$verb}($fullUrl, $options);
 		} catch (ClientException $ex) {
 			$this->response = $ex->getResponse();
@@ -192,6 +192,8 @@ class NextcloudApiContext implements Context {
 	}
 
 	protected function beforeRequest(string $fullUrl, array $options): array {
+		$options = $this->parseFormParams($options);
+		$fullUrl = $this->parseText($fullUrl);
 		return [$fullUrl, $options];
 	}
 
@@ -368,6 +370,25 @@ class NextcloudApiContext implements Context {
 			]);
 		}
 		$this->setCurrentUser($currentUser);
+	}
+
+	protected function parseFormParams(array $options): array {
+		if (!empty($options['form_params'])) {
+			$this->parseTextRcursive($options['form_params']);
+		}
+		return $options;
+	}
+
+	private function parseTextRcursive(&$array): array {
+		array_walk_recursive($array, function (&$value) {
+			if (is_string($value)) {
+				$value = $this->parseText($value);
+			} elseif ($value instanceof \stdClass) {
+				$value = (array) $value;
+				$value = json_decode(json_encode($this->parseTextRcursive($value)));
+			}
+		});
+		return $array;
 	}
 
 	protected function parseText(string $text): string {
