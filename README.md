@@ -82,6 +82,41 @@ When sending "post" to ocs "/apps/libresign/api/v1/request-signature"
   | file   | {"base64":""} |
 ```
 
+# Step: `fetch field :path from prevous JSON response`
+
+If the json response is an array, you can fetch specific values using this step. The fetched values is stored to be used by other steps.
+
+`:path`: Path is  a selector to retrieves a value from a deeply nested array using "dot" notation:
+
+To the follow json:
+```json
+{"products":{"desk":{"price":100}}}
+```
+path need to be: products.desk.price
+
+You also can prefix the path by an alias inside parenthesis:
+
+(price)products.desk.price
+
+The alias `price` could be used in a path or body of a request:
+```gherkin
+  When set the response to:
+    """
+    {
+      "data": [
+        {
+          "foo":"bar"
+        }
+      ]
+    }
+    """
+  And sending "POST" to "/"
+  And fetch field "(foo)data.0.foo" from prevous JSON response
+  # After fetch the field, you can use the value of field like this:
+  And sending "POST" to "/?foo=<foo>"
+    | field | <data.0.foo> |
+```
+
 ## Parse response using jq
 
 You can use [jq](https://jqlang.github.io/jq/manual/) expression casting to check a value in a json response body of a request. To do this you will need to install the jq command.
