@@ -76,9 +76,9 @@ Feature: Test this extension
       }
       """
     And sending "POST" to "/"
-    And fetch field "data.0.foo" from prevous JSON response
+    And fetch field "(foo)data.0.foo" from prevous JSON response
     # After fetch the field, you can use the value of field like this:
-    And sending "POST" to "/?foo=<data.0.foo>"
+    And sending "POST" to "/?foo=<foo>"
       | field | <data.0.foo> |
 
   Scenario: Test initial state with string

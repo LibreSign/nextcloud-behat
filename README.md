@@ -79,7 +79,7 @@ To send a value as array, you can set a json string and the json string will be 
 ```gherkin
 When sending "post" to ocs "/apps/libresign/api/v1/request-signature"
   | status | 1 |
-  | file | {"base64":""} |
+  | file   | {"base64":""} |
 ```
 
 ## Parse response using jq
@@ -112,7 +112,9 @@ If you need to:
 - Get values from a request, store and use in other request
 - Parse the response of a request
 
-Implement a method `parseText` like the follow code and remember to call parent method:
+Implement a method `parseText` like the follow code and remember to call parent method.
+
+This methods can works together with `fetch field :path from prevous JSON response`
 ```php
 protected function parseText(string $text): string {
   $patterns = [
