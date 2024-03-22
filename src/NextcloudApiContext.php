@@ -379,8 +379,8 @@ class NextcloudApiContext implements Context {
 		return $options;
 	}
 
-	private function parseTextRcursive(&$array): array {
-		array_walk_recursive($array, function (&$value) {
+	private function parseTextRcursive(array &$array): array {
+		array_walk_recursive($array, function (mixed &$value) {
 			if (is_string($value)) {
 				$value = $this->parseText($value);
 			} elseif ($value instanceof \stdClass) {
