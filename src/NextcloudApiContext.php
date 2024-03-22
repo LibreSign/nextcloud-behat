@@ -316,11 +316,18 @@ class NextcloudApiContext implements Context {
 	public function fetchFieldFromPreviousJsonResponse(string $path): void {
 		$this->response->getBody()->seek(0);
 		$responseArray = json_decode($this->response->getBody()->getContents(), true);
+		if (preg_match('/(?<alias>\([^)]*\))(?<patch>.*)/', $path, $matches)) {
+			$alias = $matches['alias'];
+			$path = $matches['patch'];
+		}
 		$keys = explode('.', $path);
 		$value = $responseArray;
 		foreach ($keys as $key) {
 			Assert::assertArrayHasKey($key, $value, 'Key [' . $key . '] of path [' . $path . '] not found.');
 			$value = $value[$key];
+		}
+		if (isset($alias)) {
+			$this->fields[$alias] = $value;
 		}
 		$this->fields[$path] = $value;
 	}
