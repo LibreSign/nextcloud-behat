@@ -63,6 +63,7 @@ class FeatureContext extends NextcloudApiContext {
 
 		// Url
 		$actual = preg_replace('/^\/index.php/', '', $lastRequest->getRequestUri());
+		$url = $this->parseText($url);
 		Assert::assertEquals($url, $actual);
 
 		// Headers

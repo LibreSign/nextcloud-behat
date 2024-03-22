@@ -64,6 +64,23 @@ Feature: Test this extension
       | (jq).Foo     | (jq).Bar == "33" |
       | (jq).Foo.Bar | 33               |
 
+  Scenario: Test get field from json response
+    When set the response to:
+      """
+      {
+        "data": [
+          {
+            "foo":"bar"
+          }
+        ]
+      }
+      """
+    And sending "POST" to "/"
+    And fetch field "data.0.foo" from prevous JSON response
+    # After fetch the field, you can use the value of field like this:
+    And sending "POST" to "/?foo=<data.0.foo>"
+      | field | <data.0.foo> |
+
   Scenario: Test initial state with string
     When set the response to:
       """

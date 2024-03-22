@@ -52,11 +52,12 @@ When as user :user
 When user :user exists
 When sending :verb to :url
 When the response should be a JSON array with the following mandatory values
-When the response should contain the initial state :name with the following values:
 When /^set the display name of user "([^"]*)" to "([^"]*)"$/
 When /^set the email of user "([^"]*)" to "([^"]*)"$/
 When sending :verb to ocs :url
 When the response should have a status code :code
+When fetch field :path from prevous JSON response
+When the response should contain the initial state :name with the following values:
 When the following :appId app config is set
 ```
 
@@ -105,8 +106,13 @@ Then the response should be a JSON array with the following mandatory values
   | (jq).Foo.Bar | 33               |
 ```
 
-## Parse initial state
-If you need to parse the initial state to use placeholder or get any value from current initial state, implement a method `parseText` like this:
+## Parse text
+
+If you need to:
+- Get values from a request, store and use in other request
+- Parse the response of a request
+
+Implement a method `parseText` like the follow code and remember to call parent method:
 ```php
 protected function parseText(string $text): string {
   $patterns = [
@@ -118,6 +124,8 @@ protected function parseText(string $text): string {
     $this->file['uuid'] ?? $this->getFileUuidFromText($text),
   ];
   $text = preg_replace($patterns, $replacements, $text);
+  $text = parent::parseText($text);
   return $text;
 }
 ```
+For more information about parseText, check the scenario `Test get field from json response`

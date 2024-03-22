@@ -23,6 +23,7 @@ class NextcloudApiContext implements Context {
 	protected string $baseUrl;
 	protected RunServerListener $server;
 	protected string $currentUser = '';
+	protected array $fields = [];
 	/**
 	 * @var string[]
 	 */
@@ -180,8 +181,8 @@ class NextcloudApiContext implements Context {
 		}
 
 		try {
-			$this->requestOptions = $options;
 			list($fullUrl, $options) = $this->beforeRequest($fullUrl, $options);
+			$this->requestOptions = $options;
 			$this->response = $client->{$verb}($fullUrl, $options);
 		} catch (ClientException $ex) {
 			$this->response = $ex->getResponse();
@@ -191,6 +192,8 @@ class NextcloudApiContext implements Context {
 	}
 
 	protected function beforeRequest(string $fullUrl, array $options): array {
+		$options = $this->parseFormParams($options);
+		$fullUrl = $this->parseText($fullUrl);
 		return [$fullUrl, $options];
 	}
 
@@ -308,6 +311,21 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
+	 * @When fetch field :path from prevous JSON response
+	 */
+	public function fetchFieldFromPreviousJsonResponse(string $path): void {
+		$this->response->getBody()->seek(0);
+		$responseArray = json_decode($this->response->getBody()->getContents(), true);
+		$keys = explode('.', $path);
+		$value = $responseArray;
+		foreach ($keys as $key) {
+			Assert::assertArrayHasKey($key, $value, 'Key [' . $key . '] of path [' . $path . '] not found.');
+			$value = $value[$key];
+		}
+		$this->fields[$path] = $value;
+	}
+
+	/**
 	 * @When the response should contain the initial state :name with the following values:
 	 */
 	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
@@ -354,7 +372,33 @@ class NextcloudApiContext implements Context {
 		$this->setCurrentUser($currentUser);
 	}
 
+	protected function parseFormParams(array $options): array {
+		if (!empty($options['form_params'])) {
+			$this->parseTextRcursive($options['form_params']);
+		}
+		return $options;
+	}
+
+	private function parseTextRcursive(array &$array): array {
+		array_walk_recursive($array, function (mixed &$value) {
+			if (is_string($value)) {
+				$value = $this->parseText($value);
+			} elseif ($value instanceof \stdClass) {
+				$value = (array) $value;
+				$value = json_decode(json_encode($this->parseTextRcursive($value)));
+			}
+		});
+		return $array;
+	}
+
 	protected function parseText(string $text): string {
+		$patterns = [];
+		$replacements = [];
+		foreach ($this->fields as $key => $value) {
+			$patterns[] = '/<' . $key . '>/';
+			$replacements[] = $value;
+		}
+		$text = preg_replace($patterns, $replacements, $text);
 		return $text;
 	}
 
