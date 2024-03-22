@@ -23,6 +23,7 @@ class NextcloudApiContext implements Context {
 	protected string $baseUrl;
 	protected RunServerListener $server;
 	protected string $currentUser = '';
+	protected array $fields = [];
 	/**
 	 * @var string[]
 	 */
@@ -308,6 +309,21 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
+	 * @When fetch field :path from prevous JSON response
+	 */
+	public function fetchFieldFromPreviousJsonResponse(string $path): void {
+		$this->response->getBody()->seek(0);
+		$responseArray = json_decode($this->response->getBody()->getContents(), true);
+		$keys = explode('.', $path);
+		$value = $responseArray;
+		foreach ($keys as $key) {
+			Assert::assertArrayHasKey($key, $value, 'Key [' . $key . '] of path [' . $path . '] not found.');
+			$value = $value[$key];
+		}
+		$this->fields[$path] = $value;
+	}
+
+	/**
 	 * @When the response should contain the initial state :name with the following values:
 	 */
 	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
@@ -355,6 +371,13 @@ class NextcloudApiContext implements Context {
 	}
 
 	protected function parseText(string $text): string {
+		$patterns = [];
+		$replacements = [];
+		foreach ($this->fields as $key => $value) {
+			$patterns[] = '/<' . $key . '>/';
+			$replacements[] = $value;
+		}
+		$text = preg_replace($patterns, $replacements, $text);
 		return $text;
 	}
 
