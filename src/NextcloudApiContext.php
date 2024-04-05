@@ -251,6 +251,8 @@ class NextcloudApiContext implements Context {
 		$json = $this->response->getBody()->getContents();
 		$this->response->getBody()->seek(0);
 		foreach ($expectedValues as $value) {
+			$value['key'] = $this->parseText($value['key']);
+			$value['value'] = $this->parseText($value['value']);
 			$actual = $this->testAndGetActualValue($value, $json);
 			// Test actual value
 			if (str_starts_with($value['value'], '(jq)')) {
