@@ -52,17 +52,19 @@ Feature: Test this extension
       """
       {
         "Foo": {
-          "Bar": "33"
+          "Bar": "33",
+          "Foo": false
         }
       }
       """
     And sending "POST" to "/"
     Then the response should be a JSON array with the following mandatory values
-      | key          | value            |
-      | Foo          | (jq).Bar == "33" |
-      | (jq).Foo     | {"Bar":"33"}     |
-      | (jq).Foo     | (jq).Bar == "33" |
-      | (jq).Foo.Bar | 33               |
+      | key          | value                    |
+      | Foo          | (jq).Bar == "33"         |
+      | (jq).Foo     | {"Bar":"33","Foo":false} |
+      | (jq).Foo     | (jq).Bar == "33"         |
+      | (jq).Foo.Bar | 33                       |
+      | (jq).Foo.Foo | false                    |
 
   Scenario: Test get field from json response
     When set the response to:
@@ -191,3 +193,17 @@ Feature: Test this extension
         "orange"
       ]
       """
+
+  Scenario: Test initial state using jq
+    When set the response to:
+      """
+      <html>
+        <body>
+          <input type="hidden" id="initial-state-appid-json-array" value="WyJvcmFuZ2UiXQ==">
+        </body>
+      </html>
+      """
+    And sending "POST" to "/"
+    Then the response should contain the initial state "appid-json-array" json that match with:
+      | key      | value  |
+      | (jq).[0] | orange |

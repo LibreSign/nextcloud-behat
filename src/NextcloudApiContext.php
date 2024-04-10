@@ -250,6 +250,11 @@ class NextcloudApiContext implements Context {
 		$expectedValues = $table->getColumnsHash();
 		$json = $this->response->getBody()->getContents();
 		$this->response->getBody()->seek(0);
+		$this->jsonStringMatchWith($json, $expectedValues);
+	}
+
+	private function jsonStringMatchWith(string $json, array $expectedValues): void {
+		Assert::assertJson($json);
 		foreach ($expectedValues as $value) {
 			$value['key'] = $this->parseText($value['key']);
 			$value['value'] = $this->parseText($value['value']);
@@ -276,12 +281,12 @@ class NextcloudApiContext implements Context {
 				substr($value['key'], 4),
 				$json
 			);
-			Assert::assertNotEmpty($actual,
-				"The follow JsonQuery returned empty value: {$value['key']} Json: $json"
-			);
 			if (!is_string($actual)) {
 				$actual = json_encode($actual);
 			}
+			Assert::assertNotEmpty($actual,
+				"The follow JsonQuery returned empty value: {$value['key']} Json: $json"
+			);
 			return $actual;
 		}
 		Assert::assertArrayHasKey(
@@ -363,6 +368,29 @@ class NextcloudApiContext implements Context {
 			}
 			Assert::assertEquals($expected, $actual);
 		}
+	}
+
+	/**
+	 * @When the response should contain the initial state :name json that match with:
+	 */
+	public function theResponseShouldContainTheInitialStateJsonThatMatchWith(string $name, TableNode $table): void {
+		$this->response->getBody()->seek(0);
+		$html = $this->response->getBody()->getContents();
+		$dom = new DOMDocument();
+		// https://www.php.net/manual/en/domdocument.loadhtml.php#95463
+		libxml_use_internal_errors(true);
+		if (empty($html) || !$dom->loadHTML($html)) {
+			throw new \Exception('The response is not HTML');
+		}
+		$element = $dom->getElementById('initial-state-' . $name);
+		if (!$element) {
+			throw new \Exception('Initial state not found: '. $name);
+		}
+		$base64 = $element->getAttribute('value');
+		$actual = base64_decode($base64);
+		$actual = $this->parseText($actual);
+		$expectedValues = $table->getColumnsHash();
+		$this->jsonStringMatchWith($actual, $expectedValues);
 	}
 
 	/**
