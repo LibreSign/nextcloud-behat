@@ -250,6 +250,11 @@ class NextcloudApiContext implements Context {
 		$expectedValues = $table->getColumnsHash();
 		$json = $this->response->getBody()->getContents();
 		$this->response->getBody()->seek(0);
+		$this->jsonStringMatchWith($json, $expectedValues);
+	}
+
+	private function jsonStringMatchWith(string $json, array $expectedValues): void {
+		Assert::assertJson($json);
 		foreach ($expectedValues as $value) {
 			$value['key'] = $this->parseText($value['key']);
 			$value['value'] = $this->parseText($value['value']);
