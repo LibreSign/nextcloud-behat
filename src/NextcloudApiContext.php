@@ -371,6 +371,29 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
+	 * @When the response should contain the initial state :name json that match with:
+	 */
+	public function theResponseShouldContainTheInitialStateJsonThatMatchWith(string $name, TableNode $table): void {
+		$this->response->getBody()->seek(0);
+		$html = $this->response->getBody()->getContents();
+		$dom = new DOMDocument();
+		// https://www.php.net/manual/en/domdocument.loadhtml.php#95463
+		libxml_use_internal_errors(true);
+		if (empty($html) || !$dom->loadHTML($html)) {
+			throw new \Exception('The response is not HTML');
+		}
+		$element = $dom->getElementById('initial-state-' . $name);
+		if (!$element) {
+			throw new \Exception('Initial state not found: '. $name);
+		}
+		$base64 = $element->getAttribute('value');
+		$actual = base64_decode($base64);
+		$actual = $this->parseText($actual);
+		$expectedValues = $table->getColumnsHash();
+		$this->jsonStringMatchWith($actual, $expectedValues);
+	}
+
+	/**
 	 * @When the following :appId app config is set
 	 *
 	 * @param TableNode $formData

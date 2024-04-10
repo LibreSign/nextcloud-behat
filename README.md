@@ -58,6 +58,7 @@ When sending :verb to ocs :url
 When the response should have a status code :code
 When fetch field :path from prevous JSON response
 When the response should contain the initial state :name with the following values:
+When the response should contain the initial state :name json that match with:
 When the following :appId app config is set
 ```
 

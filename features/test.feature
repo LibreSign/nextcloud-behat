@@ -193,3 +193,17 @@ Feature: Test this extension
         "orange"
       ]
       """
+
+  Scenario: Test initial state using jq
+    When set the response to:
+      """
+      <html>
+        <body>
+          <input type="hidden" id="initial-state-appid-json-array" value="WyJvcmFuZ2UiXQ==">
+        </body>
+      </html>
+      """
+    And sending "POST" to "/"
+    Then the response should contain the initial state "appid-json-array" json that match with:
+      | key      | value   |
+      | (jq).[0] | orange |
