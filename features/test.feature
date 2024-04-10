@@ -205,5 +205,5 @@ Feature: Test this extension
       """
     And sending "POST" to "/"
     Then the response should contain the initial state "appid-json-array" json that match with:
-      | key      | value   |
+      | key      | value  |
       | (jq).[0] | orange |
