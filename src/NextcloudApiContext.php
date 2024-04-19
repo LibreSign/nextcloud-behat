@@ -330,7 +330,7 @@ class NextcloudApiContext implements Context {
 		$keys = explode('.', $path);
 		$value = $responseArray;
 		foreach ($keys as $key) {
-			Assert::assertArrayHasKey($key, $value, 'Key [' . $key . '] of path [' . $path . '] not found.');
+			Assert::assertArrayHasKey($key, $value, 'Key [' . $key . '] of path [' . $path . '] not found at body: ' . json_encode($responseArray));
 			$value = $value[$key];
 		}
 		if (isset($alias)) {
