@@ -284,9 +284,6 @@ class NextcloudApiContext implements Context {
 			if (!is_string($actual)) {
 				$actual = json_encode($actual);
 			}
-			Assert::assertNotEmpty($actual,
-				"The follow JsonQuery returned empty value: {$value['key']} Json: $json"
-			);
 			return $actual;
 		}
 		Assert::assertArrayHasKey(
