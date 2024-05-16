@@ -83,7 +83,7 @@ When sending "post" to ocs "/apps/libresign/api/v1/request-signature"
   | file   | {"base64":""} |
 ```
 
-# Step: `fetch field :path from prevous JSON response`
+### Step: `fetch field :path from prevous JSON response`
 
 If the json response is an array, you can fetch specific values using this step. The fetched values is stored to be used by other steps.
 
