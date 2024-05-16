@@ -47,7 +47,10 @@
         "allow-plugins": {
             "bamarni/composer-bin-plugin": true
         },
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "platform": {
+            "php": "8.0.2"
+        }
     },
     "extra": {
       "bamarni-bin": {
