@@ -265,11 +265,11 @@ class NextcloudApiContext implements Context {
 				$this->validateAsJsonQuery($expected, $actual);
 				continue;
 			}
-			if ($this->isJson($actual)) {
-				Assert::assertJsonStringEqualsJsonString($value['value'], $actual, 'Key: ' . $value['key']);
+			if ($this->isJson($actual) && $this->isJson($value['value'])) {
+				Assert::assertJsonStringEqualsJsonString($value['value'], $actual, 'Key: ' . $value['key'] . ' JSON: ' . $json);
 				continue;
 			}
-			Assert::assertEquals($value['value'], $actual, 'Key: ' . $value['key']);
+			Assert::assertEquals($value['value'], $actual, 'Key: ' . $value['key'] . ' JSON: ' . $json);
 		}
 	}
 
