@@ -32,9 +32,9 @@
         ]
     },
     "require": {
-        "php": ">=8.0",
+        "php": ">=8.1",
         "guzzlehttp/guzzle": "^7.8",
-        "phpunit/phpunit": "^9.6",
+        "phpunit/phpunit": "*",
         "behat/behat": "^3.13",
         "libresign/behat-builtin-extension": "^0.6.2",
         "estahn/json-query-wrapper": "*"
@@ -49,7 +49,7 @@
         },
         "optimize-autoloader": true,
         "platform": {
-            "php": "8.0.2"
+            "php": "8.1"
         }
     },
     "extra": {
