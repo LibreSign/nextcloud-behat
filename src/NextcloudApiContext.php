@@ -283,17 +283,21 @@ class NextcloudApiContext implements Context {
 			);
 			if (!is_string($actual)) {
 				$actual = json_encode($actual);
+				Assert::assertIsString($actual);
 			}
 			return $actual;
 		}
+		$responseAsJsonString = json_encode($realResponseArray);
+		Assert::assertIsString($responseAsJsonString);
 		Assert::assertArrayHasKey(
 			$value['key'],
 			$realResponseArray,
-			'Not found: "' . $value['key'] . '" at array: ' . json_encode($realResponseArray)
+			'Not found: "' . $value['key'] . '" at array: ' . $responseAsJsonString
 		);
 		$actual = $realResponseArray[$value['key']];
 		if (!is_string($actual)) {
 			$actual = json_encode($actual);
+			Assert::assertIsString($actual);
 		}
 		return $actual;
 	}
@@ -327,7 +331,9 @@ class NextcloudApiContext implements Context {
 		$keys = explode('.', $path);
 		$value = $responseArray;
 		foreach ($keys as $key) {
-			Assert::assertArrayHasKey($key, $value, 'Key [' . $key . '] of path [' . $path . '] not found at body: ' . json_encode($responseArray));
+			$body = json_encode($responseArray);
+			Assert::assertIsString($body);
+			Assert::assertArrayHasKey($key, $value, 'Key [' . $key . '] of path [' . $path . '] not found at body: ' . $body);
 			$value = $value[$key];
 		}
 		if (isset($alias)) {
@@ -419,7 +425,9 @@ class NextcloudApiContext implements Context {
 				$value = $this->parseText($value);
 			} elseif ($value instanceof \stdClass) {
 				$value = (array) $value;
-				$value = json_decode(json_encode($this->parseTextRcursive($value)));
+				$buffer = json_encode($this->parseTextRcursive($value));
+				Assert::assertIsString($buffer);
+				$value = json_decode($buffer);
 			}
 		});
 		return $array;
@@ -433,6 +441,7 @@ class NextcloudApiContext implements Context {
 			$replacements[] = $value;
 		}
 		$text = preg_replace($patterns, $replacements, $text);
+		Assert::assertIsString($text);
 		return $text;
 	}
 

@@ -93,9 +93,11 @@ class FeatureContext extends NextcloudApiContext {
 	 */
 	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
 		$lastRequest = $this->getLastRequest();
+		$body = json_encode($lastRequest->getParsedInput());
+		Assert::assertIsString($body);
 		// Mock response to be equal to body of request
 		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
-			json_encode($lastRequest->getParsedInput())
+			$body
 		));
 		parent::theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues($table);
 	}
