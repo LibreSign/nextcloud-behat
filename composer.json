@@ -9,26 +9,23 @@
     "type": "library",
     "license": "AGPL-3.0-or-later",
     "prefer-stable": true,
-    "authors": [
-        {
-            "name": "Vitor Mattos",
-            "email": "vitor@php.rio"
-        }
-    ],
+    "authors": [{
+        "name": "Vitor Mattos",
+        "email": "vitor@php.rio"
+    }],
     "scripts": {
         "bin": "echo 'bin not installed'",
         "cs:check": "php-cs-fixer fix --dry-run --diff",
         "cs:fix": "php-cs-fixer fix",
         "psalm": "psalm --threads=1",
-        "psalm:update-baseline": "psalm --threads=1 --update-baseline --set-baseline=psalm-baseline.xml",
-        "psalm:clear": "psalm --clear-cache && psalm --clear-global-cache",
+        "psalm:update-baseline": "psalm --no-cache --threads=$(nproc) --update-baseline --set-baseline=psalm-baseline.xml",
         "post-install-cmd": [
-          "@composer bin all install --ansi",
-          "composer dump-autoload"
+            "@composer bin all install --ansi",
+            "composer dump-autoload"
         ],
         "post-update-cmd": [
-          "@composer bin all update --ansi",
-          "composer dump-autoload"
+            "@composer bin all update --ansi",
+            "composer dump-autoload"
         ]
     },
     "require": {
@@ -53,10 +50,10 @@
         }
     },
     "extra": {
-      "bamarni-bin": {
-        "bin-links": true,
-        "forward-command": true
-      }
+        "bamarni-bin": {
+            "bin-links": true,
+            "forward-command": true
+        }
     },
     "autoload": {
         "psr-4": {
