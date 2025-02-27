@@ -5,7 +5,9 @@ namespace Libresign\NextcloudBehat;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
+use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
 use DOMDocument;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
@@ -43,6 +45,21 @@ class NextcloudApiContext implements Context {
 		}
 		if (isset($parameters['admin_password'])) {
 			$this->adminPassword = $parameters['admin_password'];
+		}
+	}
+
+	/**
+	 * @BeforeSuite
+	 */
+	public static function beforeSuite(BeforeSuiteScope $scope):void {
+		$whoami = (string) exec('whoami');
+		if (get_current_user() !== $whoami) {
+			$command = implode(' ', $_SERVER['argv'] ?? []);
+			throw new Exception(sprintf(
+				"Have files that %s is the owner and the user that is running this test is %s, is necessary to be the same user.\n" .
+				"You should run the follow command:\n" .
+				"runuser -u %s -- %s\n\n",
+				get_current_user(), $whoami, get_current_user(), $command));
 		}
 	}
 
