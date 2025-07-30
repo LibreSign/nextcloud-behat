@@ -448,6 +448,79 @@ class NextcloudApiContext implements Context {
 		return $text;
 	}
 
+	#[Given('/^run the command "(?P<command>(?:[^"]|\\")*)"$/')]
+	public static function runCommand(string $command): array {
+		$console = self::findParentDirContainingFile('console.php');
+		$console .= '/console.php';
+		$fileOwnerUid = fileowner($console);
+		if (!is_int($fileOwnerUid)) {
+			throw new \Exception('The console file owner of ' . $console . ' is not an integer UID.');
+		}
+		$owner = posix_getpwuid($fileOwnerUid);
+		if ($owner === false) {
+			throw new \Exception('Could not retrieve owner information for UID ' . $fileOwnerUid);
+		}
+		$fullCommand = 'php ' . $console . ' ' . $command;
+		if (posix_getuid() !== $owner['uid']) {
+			$fullCommand = 'runuser -u ' . $owner['name'] . ' -- ' . $fullCommand;
+		}
+		$fullCommand .= '  2>&1';
+		return self::runBashCommand($fullCommand);
+	}
+
+	public static function findParentDirContainingFile(string $filename): string {
+		$dir = getcwd();
+		if (is_bool($dir)) {
+			throw new \Exception('Could not get current working directory (getcwd() returned false)');
+		}
+
+		while ($dir !== dirname($dir)) {
+			if (file_exists($dir . DIRECTORY_SEPARATOR . $filename)) {
+				return $dir;
+			}
+			$dir = dirname($dir);
+		}
+
+		throw new \Exception('The file ' . $filename . ' was not found in the parent directories of ' . $dir);
+	}
+
+	private static function runBashCommand(string $command): array {
+		$command = str_replace('\"', '"', $command);
+		$patterns = [];
+		$replacements = [];
+		$fields = [
+			'appRootDir' => self::findParentDirContainingFile('appinfo'),
+			'nextcloudRootDir' => self::findParentDirContainingFile('console.php'),
+		];
+		foreach ($fields as $key => $value) {
+			$patterns[] = '/<' . $key . '>/';
+			$replacements[] = $value;
+		}
+		$command = preg_replace($patterns, $replacements, $command);
+		if (!is_string($command)) {
+			throw new \Exception('The command is not a string after preg_replace: ' . print_r($command, true));
+		}
+
+		exec($command, $output, $resultCode);
+		return [
+			'command' => $command,
+			'output' => $output,
+			'resultCode' => $resultCode,
+		];
+	}
+
+	#[Given('/^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/')]
+	public static function runCommandWithResultCode(string $command, int $resultCode = 0): void {
+		$return = self::runCommand($command);
+		Assert::assertEquals($resultCode, $return['resultCode'], print_r($return, true));
+	}
+
+	#[Given('/^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/')]
+	public static function runBashCommandWithResultCode(string $command, int $resultCode = 0): void {
+		$return = self::runBashCommand($command);
+		Assert::assertEquals($resultCode, $return['resultCode'], print_r($return, true));
+	}
+
 	#[AfterScenario()]
 	public function tearDown(): void {
 		foreach ($this->createdUsers as $user) {

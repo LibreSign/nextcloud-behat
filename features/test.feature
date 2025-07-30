@@ -227,3 +227,21 @@ Feature: Test this extension
     Then the response should contain the initial state "appid-json-array" json that match with:
       | key      | value  |
       | (jq).[0] | orange |
+
+  Scenario: Test list app directory with success
+    When run the bash command "ls <appRootDir>" with result code 0
+
+  Scenario: Test list Nextcloud directory with success
+    When run the bash command "ls <nextcloudRootDir>" with result code 0
+
+  Scenario: Test run bash command with success
+    When run the bash command "true" with result code 0
+
+  Scenario: Test run bash command with error
+    When run the bash command "false" with result code 1
+
+  Scenario: Run occ command with success
+    When run the command "status" with result code 0
+
+  Scenario: Run occ command with success
+    When run the command "invalid-command" with result code 1
