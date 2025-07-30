@@ -325,16 +325,25 @@ class NextcloudApiContext implements Context {
 	#[Given('fetch field :path from prevous JSON response')]
 	public function fetchFieldFromPreviousJsonResponse(string $path): void {
 		$this->response->getBody()->seek(0);
-		$responseArray = json_decode($this->response->getBody()->getContents(), true);
-		if (preg_match('/(?<alias>\([^)]*\))(?<patch>.*)/', $path, $matches)) {
+		$body = $this->response->getBody()->getContents();
+
+		// Is json query
+		if (preg_match('/(?<alias>\([^)]*\))\(jq\)(?<path>.*)/', $path, $matches)) {
+			$this->fields[$matches['alias']] = $this->testAndGetActualValue(
+				['key' => '(jq)' . $matches['path']],
+				$body
+			);
+			return;
+		}
+
+		// Is array with alias
+		if (preg_match('/(?<alias>\([^)]*\)){1,}(?<path>.*)/', $path, $matches)) {
 			$alias = $matches['alias'];
-			$path = $matches['patch'];
+			$path = $matches['path'];
 		}
 		$keys = explode('.', $path);
-		$value = $responseArray;
+		$value = json_decode($body, true);
 		foreach ($keys as $key) {
-			$body = json_encode($responseArray);
-			Assert::assertIsString($body);
 			Assert::assertArrayHasKey($key, $value, 'Key [' . $key . '] of path [' . $path . '] not found at body: ' . $body);
 			$value = $value[$key];
 		}

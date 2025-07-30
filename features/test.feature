@@ -86,6 +86,26 @@ Feature: Test this extension
       | key  | value             |
       | data | [{"foo":"<FIELD_FOO>"}] |
 
+  Scenario: Test get field from json response using jq
+    When set the response to:
+      """
+      {
+        "data": [
+          {
+            "foo":"bar"
+          }
+        ]
+      }
+      """
+    And sending "POST" to "/"
+    And fetch field "(FIELD_FOO)(jq).data[0].foo" from prevous JSON response
+    # After fetch the field, you can use the value of field like this:
+    And sending "POST" to "/?foo=<FIELD_FOO>"
+      | field | <data.0.foo> |
+    Then the response should be a JSON array with the following mandatory values
+      | key  | value             |
+      | data | [{"foo":"<FIELD_FOO>"}] |
+
   Scenario: Test initial state with string
     When set the response to:
       """

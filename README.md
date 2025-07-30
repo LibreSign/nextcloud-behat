@@ -118,6 +118,16 @@ The alias `price` could be used in a path or body of a request:
     | field | <data.0.foo> |
 ```
 
+#### Fetch field using jq
+
+You can assign the return of a jq to your field using a jq like as the follow pattern:
+
+```gherkin
+And fetch field "(foo)(jq).value" from prevous JSON response
+```
+
+This will retrieve a specific value from json response and assign this to your desided field.
+
 ## Parse response using jq
 
 You can use [jq](https://jqlang.github.io/jq/manual/) expression casting to check a value in a json response body of a request. To do this you will need to install the jq command.
