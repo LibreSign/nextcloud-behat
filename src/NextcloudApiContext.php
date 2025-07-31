@@ -30,10 +30,13 @@ class NextcloudApiContext implements Context {
 	protected RunServerListener $server;
 	protected string $currentUser = '';
 	protected array $fields = [];
+	protected static array $environments = [];
+	protected static string $commandOutput = '';
+
 	/**
 	 * @var string[]
 	 */
-	protected array $createdUsers = [];
+	protected static array $createdUsers = [];
 	protected ResponseInterface $response;
 	/** @var CookieJar[] */
 	protected $cookieJars;
@@ -63,11 +66,13 @@ class NextcloudApiContext implements Context {
 				"runuser -u %s -- %s\n\n",
 				get_current_user(), $whoami, get_current_user(), $command));
 		}
+		self::runCommand('config:system:set debug --value true --type boolean');
 	}
 
 	#[BeforeScenario()]
-	public function setUp(): void {
-		$this->createdUsers = [];
+	public function beforeScenario(): void {
+		self::$createdUsers = [];
+		self::$environments = [];
 	}
 
 	#[Given('as user :user')]
@@ -110,7 +115,7 @@ class NextcloudApiContext implements Context {
 		$this->sendOCSRequest('GET', '/cloud/users' . '/' . $user);
 		$this->assertStatusCode($this->response, 200, 'Failed to do first login');
 
-		$this->createdUsers[] = $user;
+		self::$createdUsers[] = $user;
 
 		$this->setCurrentUser($currentUser);
 	}
@@ -461,6 +466,9 @@ class NextcloudApiContext implements Context {
 			throw new \Exception('Could not retrieve owner information for UID ' . $fileOwnerUid);
 		}
 		$fullCommand = 'php ' . $console . ' ' . $command;
+		if (!empty(self::$environments)) {
+			$fullCommand = http_build_query(self::$environments, '', ' ') . ' ' . $fullCommand;
+		}
 		if (posix_getuid() !== $owner['uid']) {
 			$fullCommand = 'runuser -u ' . $owner['name'] . ' -- ' . $fullCommand;
 		}
@@ -502,11 +510,22 @@ class NextcloudApiContext implements Context {
 		}
 
 		exec($command, $output, $resultCode);
+		self::$commandOutput = implode("\n", $output);
 		return [
 			'command' => $command,
 			'output' => $output,
 			'resultCode' => $resultCode,
 		];
+	}
+
+	#[Given('the output of the last command should contain the following text:')]
+	public static function theOutputOfTheLastCommandContains(PyStringNode $text): void {
+		Assert::assertStringContainsString((string) $text, self::$commandOutput, 'The output of the last command does not contain: ' . $text);
+	}
+
+	#[Given('the output of the last command should be empty')]
+	public static function theOutputOfTheLastCommandShouldBeEmpty(): void {
+		Assert::assertEmpty(self::$commandOutput, 'The output of the last command should be empty, but got: ' . self::$commandOutput);
 	}
 
 	#[Given('/^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/')]
@@ -521,9 +540,15 @@ class NextcloudApiContext implements Context {
 		Assert::assertEquals($resultCode, $return['resultCode'], print_r($return, true));
 	}
 
+	#[Given('create an environment :name with value :value to be used by occ command')]
+	public static function createAnEnvironmentWithValueToBeUsedByOccCommand(string $name, string $value):void {
+		self::$environments[$name] = $value;
+	}
+
 	#[AfterScenario()]
 	public function tearDown(): void {
-		foreach ($this->createdUsers as $user) {
+		self::$environments = [];
+		foreach (self::$createdUsers as $user) {
 			$this->deleteUser($user);
 		}
 	}
@@ -534,7 +559,7 @@ class NextcloudApiContext implements Context {
 		$this->sendOCSRequest('DELETE', '/cloud/users/' . $user);
 		$this->setCurrentUser($currentUser);
 
-		unset($this->createdUsers[array_search($user, $this->createdUsers, true)]);
+		unset(self::$createdUsers[array_search($user, self::$createdUsers, true)]);
 
 		return $this->response;
 	}

@@ -51,19 +51,21 @@ vendor/bin/behat -dl
 Given as user :user
 Given user :user exists
 Given sending :verb to :url
-Given set the response to:
 Given the response should be a JSON array with the following mandatory values
 Given /^set the display name of user "([^"]*)" to "([^"]*)"$/
 Given /^set the email of user "([^"]*)" to "([^"]*)"$/
 Given sending :verb to ocs :url
 Given the response should have a status code :code
-Given fetch field :path from previous JSON response
+Given fetch field :path from prevous JSON response
 Given the response should contain the initial state :name with the following values:
 Given the response should contain the initial state :name json that match with:
 Given the following :appId app config is set
 Given /^run the command "(?P<command>(?:[^"]|\\")*)"$/
+Given the output of the last command should contain the following text:
+Given the output of the last command should be empty
 Given /^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
 Given /^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
+Given create an environment :name with value :value to be used by occ command
 ```
 
 ## Tips
@@ -89,7 +91,7 @@ Given sending "post" to ocs "/apps/libresign/api/v1/request-signature"
 
 ### Step: all steps that run commands
 
-Before the command be executd, will replace the follow placeholders:
+Before the command is executed, the following placeholders will be replaced:
 
 | Placeholder          | Value                  |
 | -------------------- | ---------------------- |

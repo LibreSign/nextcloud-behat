@@ -230,18 +230,35 @@ Feature: Test this extension
 
   Scenario: Test list app directory with success
     When run the bash command "ls <appRootDir>" with result code 0
+    Then the output of the last command should contain the following text:
+      """
+      appinfo
+      """
 
   Scenario: Test list Nextcloud directory with success
     When run the bash command "ls <nextcloudRootDir>" with result code 0
 
   Scenario: Test run bash command with success
     When run the bash command "true" with result code 0
+    Then the output of the last command should be empty
 
   Scenario: Test run bash command with error
     When run the bash command "false" with result code 1
 
   Scenario: Run occ command with success
     When run the command "status" with result code 0
+    Then the output of the last command should contain the following text:
+      """
+      version:
+      """
 
   Scenario: Run occ command with success
     When run the command "invalid-command" with result code 1
+
+  Scenario: Create an environment with value to be used by occ command
+    When create an environment "OC_PASS" with value "" to be used by occ command
+    And run the command "user:add --password-from-env test" with result code 1
+    Then the output of the last command should contain the following text:
+      """
+      --password-from-env given, but NC_PASS/OC_PASS is empty!
+      """
