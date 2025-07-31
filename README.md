@@ -48,18 +48,18 @@ vendor/bin/behat -dl
 ```
 
 ```gherkin
-When as user :user
-When user :user exists
-When sending :verb to :url
-When the response should be a JSON array with the following mandatory values
-When /^set the display name of user "([^"]*)" to "([^"]*)"$/
-When /^set the email of user "([^"]*)" to "([^"]*)"$/
-When sending :verb to ocs :url
-When the response should have a status code :code
-When fetch field :path from prevous JSON response
-When the response should contain the initial state :name with the following values:
-When the response should contain the initial state :name json that match with:
-When the following :appId app config is set
+Given as user :user
+Given user :user exists
+Given sending :verb to :url
+Given the response should be a JSON array with the following mandatory values
+Given /^set the display name of user "([^"]*)" to "([^"]*)"$/
+Given /^set the email of user "([^"]*)" to "([^"]*)"$/
+Given sending :verb to ocs :url
+Given the response should have a status code :code
+Given fetch field :path from prevous JSON response
+Given the response should contain the initial state :name with the following values:
+Given the response should contain the initial state :name json that match with:
+Given the following :appId app config is set
 ```
 
 ## Tips
@@ -69,7 +69,7 @@ To send a json value as string, prefix the json string with (string)
 
 **Example**:
 ```gherkin
-When sending "post" to ocs "/apps/provisioning_api/api/v1/config/apps/appname/propertyname"
+Given sending "post" to ocs "/apps/provisioning_api/api/v1/config/apps/appname/propertyname"
   | value | (string){"enabled":true} |
 ```
 
@@ -78,7 +78,7 @@ To send a value as array, you can set a json string and the json string will be 
 
 **Example**:
 ```gherkin
-When sending "post" to ocs "/apps/libresign/api/v1/request-signature"
+Given sending "post" to ocs "/apps/libresign/api/v1/request-signature"
   | status | 1 |
   | file   | {"base64":""} |
 ```
@@ -125,7 +125,7 @@ You can use [jq](https://jqlang.github.io/jq/manual/) expression casting to chec
 Example:
 
 ```gherkin
-When set the response to:
+Given set the response to:
   """
   {
     "Foo": {
