@@ -232,27 +232,20 @@ class NextcloudApiContext implements Context {
 		return $this->cookieJars[$user];
 	}
 
-	/**
-	 * @param ResponseInterface $response
-	 * @param int $statusCode
-	 * @param string $message
-	 */
 	protected function assertStatusCode(ResponseInterface $response, int $statusCode, string $message = ''): void {
 		Assert::assertEquals($statusCode, $response->getStatusCode(), $message);
 	}
 
 	/**
-	 * @param string $code
 	 * @throws \InvalidArgumentException
 	 */
 	#[Given('the response should have a status code :code')]
-	public function theResponseShouldHaveStatusCode($code): void {
+	public function theResponseShouldHaveStatusCode(string $code): void {
 		$currentCode = $this->response->getStatusCode();
 		Assert::assertEquals($code, $currentCode, $this->response->getBody()->getContents());
 	}
 
 	/**
-	 * @param TableNode $table
 	 * @throws \InvalidArgumentException
 	 */
 	#[Given('the response should be a JSON array with the following mandatory values')]
