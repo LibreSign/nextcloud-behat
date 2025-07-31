@@ -56,7 +56,7 @@ Given /^set the display name of user "([^"]*)" to "([^"]*)"$/
 Given /^set the email of user "([^"]*)" to "([^"]*)"$/
 Given sending :verb to ocs :url
 Given the response should have a status code :code
-Given fetch field :path from prevous JSON response
+Given fetch field :path from previous JSON response
 Given the response should contain the initial state :name with the following values:
 Given the response should contain the initial state :name json that match with:
 Given the following :appId app config is set
@@ -83,7 +83,7 @@ Given sending "post" to ocs "/apps/libresign/api/v1/request-signature"
   | file   | {"base64":""} |
 ```
 
-### Step: `fetch field :path from prevous JSON response`
+### Step: `fetch field :path from previous JSON response`
 
 If the json response is an array, you can fetch specific values using this step. The fetched values is stored to be used by other steps.
 
@@ -112,11 +112,21 @@ The alias `price` could be used in a path or body of a request:
     }
     """
   And sending "POST" to "/"
-  And fetch field "(foo)data.0.foo" from prevous JSON response
+  And fetch field "(foo)data.0.foo" from previous JSON response
   # After fetch the field, you can use the value of field like this:
   And sending "POST" to "/?foo=<foo>"
     | field | <data.0.foo> |
 ```
+
+#### Fetch field using jq
+
+You can assign the return of a jq to your field using a jq like as the follow pattern:
+
+```gherkin
+And fetch field "(foo)(jq).value" from previous JSON response
+```
+
+This will retrieve a specific value from json response and assign this to your desided field.
 
 ## Parse response using jq
 
@@ -150,7 +160,7 @@ If you need to:
 
 Implement a method `parseText` like the follow code and remember to call parent method.
 
-This methods can works together with `fetch field :path from prevous JSON response`
+This methods can works together with `fetch field :path from previous JSON response`
 ```php
 protected function parseText(string $text): string {
   $patterns = [
