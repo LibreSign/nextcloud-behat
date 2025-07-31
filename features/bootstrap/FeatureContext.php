@@ -2,6 +2,7 @@
 
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
+use Behat\Step\Given;
 use donatj\MockWebServer\MockWebServer;
 use donatj\MockWebServer\RequestInfo;
 use donatj\MockWebServer\Response as MockWebServerResponse;
@@ -78,9 +79,7 @@ class FeatureContext extends NextcloudApiContext {
 		}
 	}
 
-	/**
-	 * @when set the response to:
-	 */
+	#[Given('set the response to:')]
 	public function setTheResponseTo(PyStringNode $response): void {
 		// Mock response to be equal to body of request
 		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
