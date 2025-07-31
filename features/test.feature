@@ -258,3 +258,6 @@ Feature: Test this extension
       """
       I found the environment variable OC_PASS with value 123456
       """
+
+  Scenario: Wait for seconds
+    When wait for 1 seconds

@@ -544,6 +544,11 @@ class NextcloudApiContext implements Context {
 		self::$environments[$name] = $value;
 	}
 
+	#[Given('/^wait for ([0-9]+) (second|seconds)$/')]
+	public function waitForXSecond(int $seconds): void {
+		sleep($seconds);
+	}
+
 	#[AfterScenario()]
 	public function tearDown(): void {
 		self::$environments = [];

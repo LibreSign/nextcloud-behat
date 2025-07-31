@@ -66,6 +66,7 @@ Given the output of the last command should be empty
 Given /^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
 Given /^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
 Given create an environment :name with value :value to be used by occ command
+Given /^wait for ([0-9]+) (second|seconds)$/
 ```
 
 ## Tips
