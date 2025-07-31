@@ -66,7 +66,6 @@ class NextcloudApiContext implements Context {
 				"runuser -u %s -- %s\n\n",
 				get_current_user(), $whoami, get_current_user(), $command));
 		}
-		self::runCommand('config:system:set debug --value true --type boolean');
 	}
 
 	#[BeforeScenario()]
@@ -455,7 +454,7 @@ class NextcloudApiContext implements Context {
 
 	#[Given('/^run the command "(?P<command>(?:[^"]|\\")*)"$/')]
 	public static function runCommand(string $command): array {
-		$console = self::findParentDirContainingFile('console.php');
+		$console = static::findParentDirContainingFile('console.php');
 		$console .= '/console.php';
 		$fileOwnerUid = fileowner($console);
 		if (!is_int($fileOwnerUid)) {
@@ -497,8 +496,8 @@ class NextcloudApiContext implements Context {
 		$patterns = [];
 		$replacements = [];
 		$fields = [
-			'appRootDir' => self::findParentDirContainingFile('appinfo'),
-			'nextcloudRootDir' => self::findParentDirContainingFile('console.php'),
+			'appRootDir' => static::findParentDirContainingFile('appinfo'),
+			'nextcloudRootDir' => static::findParentDirContainingFile('console.php'),
 		];
 		foreach ($fields as $key => $value) {
 			$patterns[] = '/<' . $key . '>/';

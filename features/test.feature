@@ -232,7 +232,7 @@ Feature: Test this extension
     When run the bash command "ls <appRootDir>" with result code 0
     Then the output of the last command should contain the following text:
       """
-      appinfo
+      FeatureContext.php
       """
 
   Scenario: Test list Nextcloud directory with success
@@ -247,18 +247,14 @@ Feature: Test this extension
 
   Scenario: Run occ command with success
     When run the command "status" with result code 0
-    Then the output of the last command should contain the following text:
-      """
-      version:
-      """
 
   Scenario: Run occ command with success
     When run the command "invalid-command" with result code 1
 
   Scenario: Create an environment with value to be used by occ command
-    When create an environment "OC_PASS" with value "" to be used by occ command
-    And run the command "user:add --password-from-env test" with result code 1
+    When create an environment "OC_PASS" with value "123456" to be used by occ command
+    And run the command "fake-command" with result code 0
     Then the output of the last command should contain the following text:
       """
-      --password-from-env given, but NC_PASS/OC_PASS is empty!
+      I found the environment variable OC_PASS with value 123456
       """

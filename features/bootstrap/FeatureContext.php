@@ -53,6 +53,15 @@ class FeatureContext extends NextcloudApiContext {
 	}
 
 	/**
+	 * When whe run the test suit of this repository at GitHub Actions, is
+	 * necessary to consider that we haven't Nextcloud installed and mock
+	 * the real path of files.
+	 */
+	public static function findParentDirContainingFile(string $filename): string {
+		return __DIR__;
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
