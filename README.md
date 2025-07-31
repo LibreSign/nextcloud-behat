@@ -67,6 +67,7 @@ Given /^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
 Given /^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
 Given create an environment :name with value :value to be used by occ command
 Given /^wait for ([0-9]+) (second|seconds)$/
+Given /^past ([0-9]+) (second|seconds) since wait step$/
 ```
 
 ## Tips

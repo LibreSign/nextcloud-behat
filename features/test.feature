@@ -261,3 +261,4 @@ Feature: Test this extension
 
   Scenario: Wait for seconds
     When wait for 1 seconds
+    When past 1 second since wait step
