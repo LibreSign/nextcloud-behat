@@ -3,6 +3,10 @@ Feature: Test this extension
     Given as user "test"
     Then user test exists
 
+  Scenario: Test guest user
+    Given as user "guest"
+    Then guest guest exists
+
   Scenario: Test POST with success
     Given sending "POST" to "/"
       | status | 1 |

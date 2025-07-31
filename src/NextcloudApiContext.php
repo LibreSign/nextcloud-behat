@@ -79,6 +79,19 @@ class NextcloudApiContext implements Context {
 		$this->currentUser = $user;
 	}
 
+	#[Given('guest :guest exists')]
+	public function assureGuestExists(string $guest): void {
+		$response = $this->userExists($guest);
+		if ($response->getStatusCode() !== 200) {
+			static::createAnEnvironmentWithValueToBeUsedByOccCommand('OC_PASS', '123456');
+			$this->runCommandWithResultCode('guests:add admin ' . $guest . ' --password-from-env', 0);
+			// Set a display name different than the user ID to be able to
+			// ensure in the tests that the right value was returned.
+			$this->setUserDisplayName($guest);
+			self::$createdUsers[] = $guest;
+		}
+	}
+
 	#[Given('user :user exists')]
 	public function assureUserExists(string $user): void {
 		$response = $this->userExists($user);
