@@ -25,4 +25,4 @@ jobs:
         run: composer install
 
       - name: Run behat
-        run: vendor/bin/behat
+        run: vendor/bin/behat -f pretty --colors
