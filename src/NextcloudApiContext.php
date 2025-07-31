@@ -30,10 +30,13 @@ class NextcloudApiContext implements Context {
 	protected RunServerListener $server;
 	protected string $currentUser = '';
 	protected array $fields = [];
+	protected static array $environments = [];
+	protected static string $commandOutput = '';
+
 	/**
 	 * @var string[]
 	 */
-	protected array $createdUsers = [];
+	protected static array $createdUsers = [];
 	protected ResponseInterface $response;
 	/** @var CookieJar[] */
 	protected $cookieJars;
@@ -66,8 +69,9 @@ class NextcloudApiContext implements Context {
 	}
 
 	#[BeforeScenario()]
-	public function setUp(): void {
-		$this->createdUsers = [];
+	public function beforeScenario(): void {
+		self::$createdUsers = [];
+		self::$environments = [];
 	}
 
 	#[Given('as user :user')]
@@ -110,7 +114,7 @@ class NextcloudApiContext implements Context {
 		$this->sendOCSRequest('GET', '/cloud/users' . '/' . $user);
 		$this->assertStatusCode($this->response, 200, 'Failed to do first login');
 
-		$this->createdUsers[] = $user;
+		self::$createdUsers[] = $user;
 
 		$this->setCurrentUser($currentUser);
 	}
@@ -448,9 +452,102 @@ class NextcloudApiContext implements Context {
 		return $text;
 	}
 
+	#[Given('/^run the command "(?P<command>(?:[^"]|\\")*)"$/')]
+	public static function runCommand(string $command): array {
+		$console = static::findParentDirContainingFile('console.php');
+		$console .= '/console.php';
+		$fileOwnerUid = fileowner($console);
+		if (!is_int($fileOwnerUid)) {
+			throw new \Exception('The console file owner of ' . $console . ' is not an integer UID.');
+		}
+		$owner = posix_getpwuid($fileOwnerUid);
+		if ($owner === false) {
+			throw new \Exception('Could not retrieve owner information for UID ' . $fileOwnerUid);
+		}
+		$fullCommand = 'php ' . $console . ' ' . $command;
+		if (!empty(self::$environments)) {
+			$fullCommand = http_build_query(self::$environments, '', ' ') . ' ' . $fullCommand;
+		}
+		if (posix_getuid() !== $owner['uid']) {
+			$fullCommand = 'runuser -u ' . $owner['name'] . ' -- ' . $fullCommand;
+		}
+		$fullCommand .= '  2>&1';
+		return self::runBashCommand($fullCommand);
+	}
+
+	public static function findParentDirContainingFile(string $filename): string {
+		$dir = getcwd();
+		if (is_bool($dir)) {
+			throw new \Exception('Could not get current working directory (getcwd() returned false)');
+		}
+
+		while ($dir !== dirname($dir)) {
+			if (file_exists($dir . DIRECTORY_SEPARATOR . $filename)) {
+				return $dir;
+			}
+			$dir = dirname($dir);
+		}
+
+		throw new \Exception('The file ' . $filename . ' was not found in the parent directories of ' . $dir);
+	}
+
+	private static function runBashCommand(string $command): array {
+		$command = str_replace('\"', '"', $command);
+		$patterns = [];
+		$replacements = [];
+		$fields = [
+			'appRootDir' => static::findParentDirContainingFile('appinfo'),
+			'nextcloudRootDir' => static::findParentDirContainingFile('console.php'),
+		];
+		foreach ($fields as $key => $value) {
+			$patterns[] = '/<' . $key . '>/';
+			$replacements[] = $value;
+		}
+		$command = preg_replace($patterns, $replacements, $command);
+		if (!is_string($command)) {
+			throw new \Exception('The command is not a string after preg_replace: ' . print_r($command, true));
+		}
+
+		exec($command, $output, $resultCode);
+		self::$commandOutput = implode("\n", $output);
+		return [
+			'command' => $command,
+			'output' => $output,
+			'resultCode' => $resultCode,
+		];
+	}
+
+	#[Given('the output of the last command should contain the following text:')]
+	public static function theOutputOfTheLastCommandContains(PyStringNode $text): void {
+		Assert::assertStringContainsString((string) $text, self::$commandOutput, 'The output of the last command does not contain: ' . $text);
+	}
+
+	#[Given('the output of the last command should be empty')]
+	public static function theOutputOfTheLastCommandShouldBeEmpty(): void {
+		Assert::assertEmpty(self::$commandOutput, 'The output of the last command should be empty, but got: ' . self::$commandOutput);
+	}
+
+	#[Given('/^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/')]
+	public static function runCommandWithResultCode(string $command, int $resultCode = 0): void {
+		$return = self::runCommand($command);
+		Assert::assertEquals($resultCode, $return['resultCode'], print_r($return, true));
+	}
+
+	#[Given('/^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/')]
+	public static function runBashCommandWithResultCode(string $command, int $resultCode = 0): void {
+		$return = self::runBashCommand($command);
+		Assert::assertEquals($resultCode, $return['resultCode'], print_r($return, true));
+	}
+
+	#[Given('create an environment :name with value :value to be used by occ command')]
+	public static function createAnEnvironmentWithValueToBeUsedByOccCommand(string $name, string $value):void {
+		self::$environments[$name] = $value;
+	}
+
 	#[AfterScenario()]
 	public function tearDown(): void {
-		foreach ($this->createdUsers as $user) {
+		self::$environments = [];
+		foreach (self::$createdUsers as $user) {
 			$this->deleteUser($user);
 		}
 	}
@@ -461,7 +558,7 @@ class NextcloudApiContext implements Context {
 		$this->sendOCSRequest('DELETE', '/cloud/users/' . $user);
 		$this->setCurrentUser($currentUser);
 
-		unset($this->createdUsers[array_search($user, $this->createdUsers, true)]);
+		unset(self::$createdUsers[array_search($user, self::$createdUsers, true)]);
 
 		return $this->response;
 	}

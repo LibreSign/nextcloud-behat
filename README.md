@@ -60,6 +60,12 @@ Given fetch field :path from previous JSON response
 Given the response should contain the initial state :name with the following values:
 Given the response should contain the initial state :name json that match with:
 Given the following :appId app config is set
+Given /^run the command "(?P<command>(?:[^"]|\\")*)"$/
+Given the output of the last command should contain the following text:
+Given the output of the last command should be empty
+Given /^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
+Given /^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
+Given create an environment :name with value :value to be used by occ command
 ```
 
 ## Tips
@@ -82,6 +88,15 @@ Given sending "post" to ocs "/apps/libresign/api/v1/request-signature"
   | status | 1 |
   | file   | {"base64":""} |
 ```
+
+### Step: all steps that run commands
+
+Before the command is executed, the following placeholders will be replaced:
+
+| Placeholder          | Value                  |
+| -------------------- | ---------------------- |
+| `<appRootDir>`       | your app root dir      |
+| `<nextcloudRootDir>` | The Nextcloud root dir |
 
 ### Step: `fetch field :path from previous JSON response`
 
