@@ -5,6 +5,9 @@ namespace Libresign\NextcloudBehat;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
+use Behat\Hook\AfterScenario;
+use Behat\Hook\BeforeScenario;
+use Behat\Hook\BeforeSuite;
 use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
 use DOMDocument;
 use Exception;
@@ -48,9 +51,7 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	/**
-	 * @BeforeSuite
-	 */
+	#[BeforeSuite()]
 	public static function beforeSuite(BeforeSuiteScope $scope):void {
 		$whoami = (string) exec('whoami');
 		if (get_current_user() !== $whoami) {
@@ -63,9 +64,7 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	/**
-	 * @BeforeScenario
-	 */
+	#[BeforeScenario()]
 	public function setUp(): void {
 		$this->createdUsers = [];
 	}
@@ -462,9 +461,7 @@ class NextcloudApiContext implements Context {
 		return $text;
 	}
 
-	/**
-	 * @AfterScenario
-	 */
+	#[AfterScenario()]
 	public function tearDown(): void {
 		foreach ($this->createdUsers as $user) {
 			$this->deleteUser($user);
