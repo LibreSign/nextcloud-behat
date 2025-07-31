@@ -78,7 +78,7 @@ Feature: Test this extension
       }
       """
     And sending "POST" to "/"
-    And fetch field "(FIELD_FOO)data.0.foo" from prevous JSON response
+    And fetch field "(FIELD_FOO)data.0.foo" from previous JSON response
     # After fetch the field, you can use the value of field like this:
     And sending "POST" to "/?foo=<FIELD_FOO>"
       | field | <data.0.foo> |
@@ -98,7 +98,7 @@ Feature: Test this extension
       }
       """
     And sending "POST" to "/"
-    And fetch field "(FIELD_FOO)(jq).data[0].foo" from prevous JSON response
+    And fetch field "(FIELD_FOO)(jq).data[0].foo" from previous JSON response
     # After fetch the field, you can use the value of field like this:
     And sending "POST" to "/?foo=<FIELD_FOO>"
       | field | <data.0.foo> |

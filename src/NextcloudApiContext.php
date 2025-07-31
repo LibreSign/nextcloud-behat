@@ -322,7 +322,7 @@ class NextcloudApiContext implements Context {
 		Assert::assertTrue($result, 'The jq "' . $expected . '" do not match with: ' . $actual);
 	}
 
-	#[Given('fetch field :path from prevous JSON response')]
+	#[Given('fetch field :path from previous JSON response')]
 	public function fetchFieldFromPreviousJsonResponse(string $path): void {
 		$this->response->getBody()->seek(0);
 		$body = $this->response->getBody()->getContents();
