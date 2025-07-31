@@ -5,6 +5,10 @@ namespace Libresign\NextcloudBehat;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
+use Behat\Hook\AfterScenario;
+use Behat\Hook\BeforeScenario;
+use Behat\Hook\BeforeSuite;
+use Behat\Step\Given;
 use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
 use DOMDocument;
 use Exception;
@@ -48,9 +52,7 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	/**
-	 * @BeforeSuite
-	 */
+	#[BeforeSuite()]
 	public static function beforeSuite(BeforeSuiteScope $scope):void {
 		$whoami = (string) exec('whoami');
 		if (get_current_user() !== $whoami) {
@@ -63,25 +65,17 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	/**
-	 * @BeforeScenario
-	 */
+	#[BeforeScenario()]
 	public function setUp(): void {
 		$this->createdUsers = [];
 	}
 
-	/**
-	 * @When as user :user
-	 * @param string $user
-	 */
+	#[Given('as user :user')]
 	public function setCurrentUser(string $user): void {
 		$this->currentUser = $user;
 	}
 
-	/**
-	 * @When user :user exists
-	 * @param string $user
-	 */
+	#[Given('user :user exists')]
 	public function assureUserExists(string $user): void {
 		$response = $this->userExists($user);
 		if ($response->getStatusCode() !== 200) {
@@ -121,7 +115,7 @@ class NextcloudApiContext implements Context {
 		$this->setCurrentUser($currentUser);
 	}
 
-	/** @When /^set the display name of user "([^"]*)" to "([^"]*)"$/  */
+	#[Given('/^set the display name of user "([^"]*)" to "([^"]*)"$/')]
 	public function setUserDisplayName(string $user, ?string $displayName = null): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
@@ -133,7 +127,7 @@ class NextcloudApiContext implements Context {
 		$this->setCurrentUser($currentUser);
 	}
 
-	/** @When /^set the email of user "([^"]*)" to "([^"]*)"$/  */
+	#[Given('/^set the email of user "([^"]*)" to "([^"]*)"$/')]
 	public function setUserEmail(string $user, string $email): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
@@ -145,11 +139,11 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
-	 * @When sending :verb to ocs :url
 	 * @param string $verb
 	 * @param string $url
 	 * @param TableNode|array|null $body
 	 */
+	#[Given('sending :verb to ocs :url')]
 	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		$url = '/ocs/v2.php' . $url;
 		$headers['OCS-ApiRequest'] = 'true';
@@ -157,12 +151,12 @@ class NextcloudApiContext implements Context {
 	}
 
 	/**
-	 * @When sending :verb to :url
 	 * @param string $verb
 	 * @param string $url
 	 * @param TableNode|array|null $body
 	 * @param array $headers
 	 */
+	#[Given('sending :verb to :url')]
 	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		if (!str_starts_with($url, '/')) {
 			$url = '/' . $url;
@@ -238,30 +232,23 @@ class NextcloudApiContext implements Context {
 		return $this->cookieJars[$user];
 	}
 
-	/**
-	 * @param ResponseInterface $response
-	 * @param int $statusCode
-	 * @param string $message
-	 */
 	protected function assertStatusCode(ResponseInterface $response, int $statusCode, string $message = ''): void {
 		Assert::assertEquals($statusCode, $response->getStatusCode(), $message);
 	}
 
 	/**
-	 * @When the response should have a status code :code
-	 * @param string $code
 	 * @throws \InvalidArgumentException
 	 */
-	public function theResponseShouldHaveStatusCode($code): void {
+	#[Given('the response should have a status code :code')]
+	public function theResponseShouldHaveStatusCode(string $code): void {
 		$currentCode = $this->response->getStatusCode();
 		Assert::assertEquals($code, $currentCode, $this->response->getBody()->getContents());
 	}
 
 	/**
-	 * @When the response should be a JSON array with the following mandatory values
-	 * @param TableNode $table
 	 * @throws \InvalidArgumentException
 	 */
+	#[Given('the response should be a JSON array with the following mandatory values')]
 	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
 		$this->response->getBody()->seek(0);
 		$expectedValues = $table->getColumnsHash();
@@ -335,9 +322,7 @@ class NextcloudApiContext implements Context {
 		Assert::assertTrue($result, 'The jq "' . $expected . '" do not match with: ' . $actual);
 	}
 
-	/**
-	 * @When fetch field :path from prevous JSON response
-	 */
+	#[Given('fetch field :path from prevous JSON response')]
 	public function fetchFieldFromPreviousJsonResponse(string $path): void {
 		$this->response->getBody()->seek(0);
 		$responseArray = json_decode($this->response->getBody()->getContents(), true);
@@ -359,9 +344,7 @@ class NextcloudApiContext implements Context {
 		$this->fields[$path] = $value;
 	}
 
-	/**
-	 * @When the response should contain the initial state :name with the following values:
-	 */
+	#[Given('the response should contain the initial state :name with the following values:')]
 	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
 		$this->response->getBody()->seek(0);
 		$html = $this->response->getBody()->getContents();
@@ -390,9 +373,7 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	/**
-	 * @When the response should contain the initial state :name json that match with:
-	 */
+	#[Given('the response should contain the initial state :name json that match with:')]
 	public function theResponseShouldContainTheInitialStateJsonThatMatchWith(string $name, TableNode $table): void {
 		$this->response->getBody()->seek(0);
 		$html = $this->response->getBody()->getContents();
@@ -413,11 +394,7 @@ class NextcloudApiContext implements Context {
 		$this->jsonStringMatchWith($actual, $expectedValues);
 	}
 
-	/**
-	 * @When the following :appId app config is set
-	 *
-	 * @param TableNode $formData
-	 */
+	#[Given('the following :appId app config is set')]
 	public function setAppConfig(string $appId, TableNode $formData): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
@@ -462,9 +439,7 @@ class NextcloudApiContext implements Context {
 		return $text;
 	}
 
-	/**
-	 * @AfterScenario
-	 */
+	#[AfterScenario()]
 	public function tearDown(): void {
 		foreach ($this->createdUsers as $user) {
 			$this->deleteUser($user);
