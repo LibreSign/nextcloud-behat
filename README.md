@@ -56,7 +56,7 @@ Given /^set the display name of user "([^"]*)" to "([^"]*)"$/
 Given /^set the email of user "([^"]*)" to "([^"]*)"$/
 Given sending :verb to ocs :url
 Given the response should have a status code :code
-Given fetch field :path from prevous JSON response
+Given fetch field :path from previous JSON response
 Given the response should contain the initial state :name with the following values:
 Given the response should contain the initial state :name json that match with:
 Given the following :appId app config is set
