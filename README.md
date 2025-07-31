@@ -55,6 +55,7 @@ Given the response should be a JSON array with the following mandatory values
 Given /^set the display name of user "([^"]*)" to "([^"]*)"$/
 Given /^set the email of user "([^"]*)" to "([^"]*)"$/
 Given sending :verb to ocs :url
+Given /^set the custom http header "([^"]*)" with "([^"]*)" as value to next request$/
 Given the response should have a status code :code
 Given fetch field :path from previous JSON response
 Given the response should contain the initial state :name with the following values:

@@ -7,6 +7,11 @@ Feature: Test this extension
     Given sending "POST" to "/"
       | status | 1 |
 
+  Scenario: Test POST with success
+    Given set the custom http header "GUSTOM_HEADER" with "custom-value" as value to next request
+    Then sending "POST" to "/"
+      | status | 1 |
+
   Scenario: Test response of POST is numeric
     When set the response to:
       """
