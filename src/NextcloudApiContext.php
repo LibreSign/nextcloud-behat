@@ -69,7 +69,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	#[BeforeScenario()]
-	public function beforeScenario(): void {
+	public static function beforeScenario(): void {
 		self::$createdUsers = [];
 		self::$environments = [];
 	}
