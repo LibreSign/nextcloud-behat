@@ -52,6 +52,7 @@ Given as user :user
 Given user :user exists
 Given sending :verb to :url
 Given the response should be a JSON array with the following mandatory values
+Given guest :guest exists
 Given /^set the display name of user "([^"]*)" to "([^"]*)"$/
 Given /^set the email of user "([^"]*)" to "([^"]*)"$/
 Given sending :verb to ocs :url
