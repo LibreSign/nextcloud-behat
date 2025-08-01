@@ -60,11 +60,11 @@ Given fetch field :path from previous JSON response
 Given the response should contain the initial state :name with the following values:
 Given the response should contain the initial state :name json that match with:
 Given the following :appId app config is set
-Given /^run the command "(?P<command>(?:[^"]|\\")*)"$/
+Given /^run the command "(?P<command>(?:[^"]|\")*)"$/
 Given the output of the last command should contain the following text:
 Given the output of the last command should be empty
-Given /^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
-Given /^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
+Given /^run the command "(?P<command>(?:[^"]|\")*)" with result code (\d+)$/
+Given /^run the bash command "(?P<command>(?:[^"]|\")*)" with result code (\d+)$/
 Given create an environment :name with value :value to be used by occ command
 ```
 
