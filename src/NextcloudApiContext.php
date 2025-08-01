@@ -32,6 +32,7 @@ class NextcloudApiContext implements Context {
 	protected array $fields = [];
 	protected static array $environments = [];
 	protected static string $commandOutput = '';
+	protected int $startWaitFor = 0;
 
 	/**
 	 * @var string[]
@@ -542,6 +543,19 @@ class NextcloudApiContext implements Context {
 	#[Given('create an environment :name with value :value to be used by occ command')]
 	public static function createAnEnvironmentWithValueToBeUsedByOccCommand(string $name, string $value):void {
 		self::$environments[$name] = $value;
+	}
+
+	#[Given('/^wait for ([0-9]+) (second|seconds)$/')]
+	public function waitForXSecond(int $seconds): void {
+		$this->startWaitFor = $seconds;
+		sleep($seconds);
+	}
+
+	#[Given('/^past ([0-9]+) (second|seconds) since wait step$/')]
+	public function pastXSecondsSinceWaitStep(int $seconds): void {
+		$currentTime = time();
+		$startTime = $currentTime - $this->startWaitFor;
+		Assert::assertGreaterThanOrEqual($startTime, $currentTime, 'The current time is not greater than or equal to the start time.');
 	}
 
 	#[AfterScenario()]
