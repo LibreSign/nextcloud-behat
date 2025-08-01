@@ -33,6 +33,7 @@ class NextcloudApiContext implements Context {
 	protected static array $environments = [];
 	protected static string $commandOutput = '';
 	protected int $startWaitFor = 0;
+	protected array $customHeaders = [];
 
 	/**
 	 * @var string[]
@@ -189,7 +190,8 @@ class NextcloudApiContext implements Context {
 
 		$options['headers'] = array_merge($headers, [
 			'Accept' => 'application/json',
-		]);
+		], $this->customHeaders);
+
 		if ($this->currentUser === 'admin') {
 			$options['auth'] = ['admin', $this->adminPassword];
 		} elseif ($this->currentUser) {
@@ -205,6 +207,15 @@ class NextcloudApiContext implements Context {
 		} catch (\GuzzleHttp\Exception\ServerException $ex) {
 			$this->response = $ex->getResponse();
 		}
+	}
+
+	#[Given('/^set the custom http header "([^"]*)" with "([^"]*)" as value to next request$/')]
+	public function setTheCustomHttpHeaderAsValueToNextRequest(string $header, string $value):void {
+		if (empty($value)) {
+			unset($this->customHeaders[$header]);
+			return;
+		}
+		$this->customHeaders[$header] = $this->parseText($value);
 	}
 
 	protected function beforeRequest(string $fullUrl, array $options): array {
