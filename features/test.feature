@@ -111,6 +111,29 @@ Feature: Test this extension
       | key  | value             |
       | data | [{"foo":"<FIELD_FOO>"}] |
 
+  Scenario: Test placeholder decode keeps numeric types in complex payload
+    When set the response to:
+      """
+      {
+        "primaryId": 639,
+        "secondaryId": 690
+      }
+      """
+    And sending "POST" to "/"
+    And fetch field "(PRIMARY_ID)primaryId" from previous JSON response
+    And fetch field "(SECONDARY_ID)secondaryId" from previous JSON response
+    And sending "PATCH" to "/"
+      | items | [{"kind":"entry","metrics":{"index":1,"size":350,"offset":166},"primaryId":<PRIMARY_ID>,"secondaryId":<SECONDARY_ID>}] |
+    Then the response should be a JSON array with the following mandatory values
+      | key                                | value                 |
+      | (jq).items[0].metrics.index        | 1                     |
+      | (jq).items[0].metrics.size         | 350                   |
+      | (jq).items[0].primaryId            | 639                   |
+      | (jq).items[0].secondaryId          | 690                   |
+      | (jq).items[0].metrics.index        | (jq)type == "number" |
+      | (jq).items[0].primaryId            | (jq)type == "number" |
+      | (jq).items[0].secondaryId          | (jq)type == "number" |
+
   Scenario: Test initial state with string
     When set the response to:
       """
