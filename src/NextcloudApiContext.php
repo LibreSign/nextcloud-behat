@@ -213,6 +213,7 @@ class NextcloudApiContext implements Context {
 
 		try {
 			list($fullUrl, $options) = $this->beforeRequest($fullUrl, $options);
+			$options = $this->normalizePayloadForRequest($verb, $options);
 			$this->requestOptions = $options;
 			$this->response = $client->{$verb}($fullUrl, $options);
 		} catch (ClientException $ex) {
@@ -220,6 +221,42 @@ class NextcloudApiContext implements Context {
 		} catch (\GuzzleHttp\Exception\ServerException $ex) {
 			$this->response = $ex->getResponse();
 		}
+	}
+
+	private function normalizePayloadForRequest(string $verb, array $options): array {
+		if (empty($options['form_params'])) {
+			return $options;
+		}
+
+		$writeVerbs = ['post', 'put', 'patch'];
+		if (!in_array(strtolower($verb), $writeVerbs, true)) {
+			return $options;
+		}
+
+		$hasComplexPayload = false;
+		foreach ($options['form_params'] as $value) {
+			if (is_array($value) || $value instanceof \stdClass) {
+				$hasComplexPayload = true;
+				break;
+			}
+		}
+
+		if (!$hasComplexPayload) {
+			return $options;
+		}
+
+		$encoded = json_encode($options['form_params']);
+		Assert::assertIsString($encoded);
+		$decoded = json_decode($encoded, true);
+		Assert::assertIsArray($decoded);
+
+		$options['json'] = $decoded;
+		unset($options['form_params']);
+		if (!isset($options['headers']['Content-Type'])) {
+			$options['headers']['Content-Type'] = 'application/json';
+		}
+
+		return $options;
 	}
 
 	#[Given('/^set the custom http header "([^"]*)" with "([^"]*)" as value to next request$/')]
@@ -239,11 +276,15 @@ class NextcloudApiContext implements Context {
 
 	protected function decodeIfIsJsonString(array $list): array {
 		foreach ($list as $key => $value) {
-			if ($this->isJson($value)) {
-				$list[$key] = json_decode($value);
+			if (!is_string($value)) {
+				continue;
 			}
 			if (str_starts_with($value, '(string)')) {
 				$list[$key] = substr($value, strlen('(string)'));
+				continue;
+			}
+			if ($this->isJson($value)) {
+				$list[$key] = json_decode($value);
 			}
 		}
 		return $list;
@@ -447,6 +488,7 @@ class NextcloudApiContext implements Context {
 	protected function parseFormParams(array $options): array {
 		if (!empty($options['form_params'])) {
 			$this->parseTextRcursive($options['form_params']);
+			$options['form_params'] = $this->decodeIfIsJsonString($options['form_params']);
 		}
 		return $options;
 	}
