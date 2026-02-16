@@ -531,12 +531,17 @@ class NextcloudApiContext implements Context {
 		if ($owner === false) {
 			throw new \Exception('Could not retrieve owner information for UID ' . $fileOwnerUid);
 		}
-		$fullCommand = 'php ' . $console . ' ' . $command;
-		if (!empty(self::$environments)) {
-			$fullCommand = http_build_query(self::$environments, '', ' ') . ' ' . $fullCommand;
-		}
+		$baseCommand = 'php ' . $console . ' ' . $command;
+		$environmentPrefix = !empty(self::$environments)
+			? http_build_query(self::$environments, '', ' ')
+			: '';
+
 		if (posix_getuid() !== $owner['uid']) {
-			$fullCommand = 'runuser -u ' . $owner['name'] . ' -- ' . $fullCommand;
+			$fullCommand = 'runuser -u ' . $owner['name'] . ' -- '
+				. ($environmentPrefix !== '' ? 'env ' . $environmentPrefix . ' ' : '')
+				. $baseCommand;
+		} else {
+			$fullCommand = ($environmentPrefix !== '' ? $environmentPrefix . ' ' : '') . $baseCommand;
 		}
 		$fullCommand .= '  2>&1';
 		return self::runBashCommand($fullCommand);
@@ -586,7 +591,7 @@ class NextcloudApiContext implements Context {
 
 	#[Given('the output of the last command should contain the following text:')]
 	public static function theOutputOfTheLastCommandContains(PyStringNode $text): void {
-		Assert::assertStringContainsString((string) $text, self::$commandOutput, 'The output of the last command does not contain: ' . $text);
+		Assert::assertStringContainsString((string) $text, self::$commandOutput, 'The output of the last command does not contain: ' . (string) $text);
 	}
 
 	#[Given('the output of the last command should be empty')]
