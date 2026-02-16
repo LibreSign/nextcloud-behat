@@ -188,7 +188,7 @@ class NextcloudApiContext implements Context {
 		}
 		$fullUrl = $this->baseUrl . $url;
 		$client = new Client();
-		if (!is_null($this->currentUser)) {
+		if ($this->currentUser !== '') {
 			$options = array_merge(
 				['cookies' => $this->getUserCookieJar($this->currentUser)],
 				$options
