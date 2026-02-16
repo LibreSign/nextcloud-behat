@@ -71,6 +71,7 @@ final class FeatureContext extends NextcloudApiContext {
 	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		parent::sendRequest($verb, $url, $body, $headers, $options);
 		$lastRequest = $this->getLastRequest();
+		$parsedInput = $this->getParsedInputFromRequest($lastRequest);
 
 		// Verb
 		Assert::assertEquals($verb, $lastRequest->getRequestMethod());
@@ -88,8 +89,37 @@ final class FeatureContext extends NextcloudApiContext {
 
 		// Form params
 		if (array_key_exists('form_params', $this->requestOptions)) {
-			Assert::assertEquals($this->requestOptions['form_params'], $lastRequest->getParsedInput());
+			Assert::assertEquals($this->requestOptions['form_params'], $parsedInput);
 		}
+
+		// JSON payload
+		if (array_key_exists('json', $this->requestOptions)) {
+			Assert::assertEquals($this->requestOptions['json'], $parsedInput);
+		}
+	}
+
+	private function getParsedInputFromRequest(RequestInfo $requestInfo): array {
+		$headers = $requestInfo->getHeaders();
+		$contentType = $headers['Content-Type'] ?? $headers['CONTENT_TYPE'] ?? '';
+		$input = $requestInfo->getInput();
+		if (str_contains((string)$contentType, 'application/json') || $this->isJson($input)) {
+			$decoded = json_decode($input, true);
+			if (is_array($decoded)) {
+				return $decoded;
+			}
+		}
+
+		return $requestInfo->getParsedInput() ?? [];
+	}
+
+	private function hasNestedPayload(array $payload): bool {
+		foreach ($payload as $value) {
+			if (is_array($value) || $value instanceof \stdClass) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	#[Given('set the response to:')]
@@ -106,12 +136,12 @@ final class FeatureContext extends NextcloudApiContext {
 	#[\Override]
 	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
 		$lastRequest = $this->getLastRequest();
-		$body = json_encode($lastRequest->getParsedInput());
-		Assert::assertIsString($body);
-		// Mock response to be equal to body of request
-		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
-			$body
-		));
+		$parsedInput = $this->getParsedInputFromRequest($lastRequest);
+		if ($this->hasNestedPayload($parsedInput)) {
+			$body = json_encode($parsedInput);
+			Assert::assertIsString($body);
+			$this->response = new Response(200, [], $body);
+		}
 		parent::theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues($table);
 	}
 }
