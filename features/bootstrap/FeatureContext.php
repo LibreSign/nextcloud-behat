@@ -12,7 +12,7 @@ use PHPUnit\Framework\Assert;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
-class FeatureContext extends NextcloudApiContext {
+final class FeatureContext extends NextcloudApiContext {
 	protected MockWebServer $mockServer;
 	public function __construct(?array $parameters = []) {
 		parent::__construct($parameters);
@@ -24,6 +24,7 @@ class FeatureContext extends NextcloudApiContext {
 	/**
 	 * @inheritDoc
 	 */
+	#[\Override]
 	public function setCurrentUser(string $user): void {
 		parent::setCurrentUser($user);
 		Assert::assertEquals($this->currentUser, $user);
@@ -32,6 +33,7 @@ class FeatureContext extends NextcloudApiContext {
 	/**
 	 * @inheritDoc
 	 */
+	#[\Override]
 	public function assureUserExists(string $user): void {
 		parent::assureUserExists($user);
 		$lastRequest = $this->getLastREquest();
@@ -57,6 +59,7 @@ class FeatureContext extends NextcloudApiContext {
 	 * necessary to consider that we haven't Nextcloud installed and mock
 	 * the real path of files.
 	 */
+	#[\Override]
 	public static function findParentDirContainingFile(string $filename): string {
 		return __DIR__;
 	}
@@ -64,6 +67,7 @@ class FeatureContext extends NextcloudApiContext {
 	/**
 	 * @inheritDoc
 	 */
+	#[\Override]
 	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		parent::sendRequest($verb, $url, $body, $headers, $options);
 		$lastRequest = $this->getLastRequest();
@@ -99,6 +103,7 @@ class FeatureContext extends NextcloudApiContext {
 	/**
 	 * @inheritDoc
 	 */
+	#[\Override]
 	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
 		$lastRequest = $this->getLastRequest();
 		$body = json_encode($lastRequest->getParsedInput());
