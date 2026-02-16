@@ -196,7 +196,8 @@ class NextcloudApiContext implements Context {
 		}
 		if ($body instanceof TableNode) {
 			$fd = $body->getRowsHash();
-			$options['form_params'] = $this->decodeIfIsJsonString($fd);
+			$options['form_params'] = $fd;
+			$options['_decode_table_node_json'] = true;
 		} elseif (is_array($body)) {
 			$options['form_params'] = $body;
 		}
@@ -488,8 +489,11 @@ class NextcloudApiContext implements Context {
 	protected function parseFormParams(array $options): array {
 		if (!empty($options['form_params'])) {
 			$this->parseTextRcursive($options['form_params']);
-			$options['form_params'] = $this->decodeIfIsJsonString($options['form_params']);
+			if (!empty($options['_decode_table_node_json'])) {
+				$options['form_params'] = $this->decodeIfIsJsonString($options['form_params']);
+			}
 		}
+		unset($options['_decode_table_node_json']);
 		return $options;
 	}
 
