@@ -96,6 +96,15 @@ final class FeatureContext extends NextcloudApiContext {
 		if (array_key_exists('json', $this->requestOptions)) {
 			Assert::assertEquals($this->requestOptions['json'], $parsedInput);
 		}
+
+		// Raw body payload
+		if (array_key_exists('body', $this->requestOptions)) {
+			Assert::assertEquals($this->requestOptions['body'], $lastRequest->getInput());
+			Assert::assertStringContainsString(
+				'application/json',
+				(string)($lastRequest->getHeaders()['Content-Type'] ?? $lastRequest->getHeaders()['CONTENT_TYPE'] ?? '')
+			);
+		}
 	}
 
 	private function getParsedInputFromRequest(RequestInfo $requestInfo): array {
