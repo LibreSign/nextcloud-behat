@@ -172,7 +172,7 @@ class NextcloudApiContext implements Context {
 	/**
 	 * @param string $verb
 	 * @param string $url
-	 * @param TableNode|array|null $body
+	 * @param TableNode|PyStringNode|array|null $body
 	 * @param array $headers
 	 */
 	#[Given('sending :verb to :url')]
@@ -198,13 +198,16 @@ class NextcloudApiContext implements Context {
 			$fd = $body->getRowsHash();
 			$options['form_params'] = $fd;
 			$options['_decode_table_node_json'] = true;
+		} elseif ($body instanceof PyStringNode) {
+			$options['body'] = $body->getRaw();
+			$options['headers']['Content-Type'] = 'application/json';
 		} elseif (is_array($body)) {
 			$options['form_params'] = $body;
 		}
 
 		$options['headers'] = array_merge($headers, [
 			'Accept' => 'application/json',
-		], $this->customHeaders);
+		], $this->customHeaders, $options['headers'] ?? []);
 
 		if ($this->currentUser === 'admin') {
 			$options['auth'] = ['admin', $this->adminPassword];
