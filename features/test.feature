@@ -42,6 +42,31 @@ Feature: Test this extension
       | key    | value |
       | status | true  |
 
+  Scenario: Test POST with raw json body via PyStringNode
+    When set the response to:
+      """
+      {
+        "status": {
+          "nested": true
+        }
+      }
+      """
+    And sending "POST" to "/"
+      """
+      {
+        "status": {
+          "nested": true
+        },
+        "events": [
+          "created",
+          "updated"
+        ]
+      }
+      """
+    Then the response should be a JSON array with the following mandatory values
+      | key                 | value  |
+      | (jq).status.nested  | true   |
+
   Scenario: Test response of POST is json
     When set the response to:
       """

@@ -5,10 +5,6 @@ namespace Libresign\NextcloudBehat;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
-use Behat\Hook\AfterScenario;
-use Behat\Hook\BeforeScenario;
-use Behat\Hook\BeforeSuite;
-use Behat\Step\Given;
 use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
 use DOMDocument;
 use Exception;
@@ -57,7 +53,9 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	#[BeforeSuite()]
+	/**
+	 * @BeforeSuite
+	 */
 	public static function beforeSuite(BeforeSuiteScope $scope):void {
 		$whoami = (string) exec('whoami');
 		if (get_current_user() !== $whoami) {
@@ -70,18 +68,24 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	#[BeforeScenario()]
+	/**
+	 * @BeforeScenario
+	 */
 	public static function beforeScenario(): void {
 		self::$createdUsers = [];
 		self::$environments = [];
 	}
 
-	#[Given('as user :user')]
+	/**
+	 * @Given as user :user
+	 */
 	public function setCurrentUser(string $user): void {
 		$this->currentUser = $user;
 	}
 
-	#[Given('user :user exists')]
+	/**
+	 * @Given user :user exists
+	 */
 	public function assureUserExists(string $user): void {
 		$response = $this->userExists($user);
 		if ($response->getStatusCode() !== 200) {
@@ -94,7 +98,9 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	#[Given('guest :guest exists')]
+	/**
+	 * @Given guest :guest exists
+	 */
 	public function assureGuestExists(string $guest): void {
 		$response = $this->userExists($guest);
 		if ($response->getStatusCode() !== 200) {
@@ -134,7 +140,9 @@ class NextcloudApiContext implements Context {
 		$this->setCurrentUser($currentUser);
 	}
 
-	#[Given('/^set the display name of user "([^"]*)" to "([^"]*)"$/')]
+	/**
+	 * @Given /^set the display name of user "([^"]*)" to "([^"]*)"$/
+	 */
 	public function setUserDisplayName(string $user, ?string $displayName = null): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
@@ -146,7 +154,9 @@ class NextcloudApiContext implements Context {
 		$this->setCurrentUser($currentUser);
 	}
 
-	#[Given('/^set the email of user "([^"]*)" to "([^"]*)"$/')]
+	/**
+	 * @Given /^set the email of user "([^"]*)" to "([^"]*)"$/
+	 */
 	public function setUserEmail(string $user, string $email): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
@@ -161,8 +171,8 @@ class NextcloudApiContext implements Context {
 	 * @param string $verb
 	 * @param string $url
 	 * @param TableNode|array|null $body
+	 * @Given sending :verb to ocs :url
 	 */
-	#[Given('sending :verb to ocs :url')]
 	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		$url = '/ocs/v2.php' . $url;
 		$headers['OCS-ApiRequest'] = 'true';
@@ -172,10 +182,10 @@ class NextcloudApiContext implements Context {
 	/**
 	 * @param string $verb
 	 * @param string $url
-	 * @param TableNode|array|null $body
+	 * @param TableNode|PyStringNode|array|null $body
 	 * @param array $headers
+	 * @Given sending :verb to :url
 	 */
-	#[Given('sending :verb to :url')]
 	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		if (!str_starts_with($url, '/')) {
 			$url = '/' . $url;
@@ -198,13 +208,16 @@ class NextcloudApiContext implements Context {
 			$fd = $body->getRowsHash();
 			$options['form_params'] = $fd;
 			$options['_decode_table_node_json'] = true;
+		} elseif ($body instanceof PyStringNode) {
+			$options['body'] = $body->getRaw();
+			$options['headers']['Content-Type'] = 'application/json';
 		} elseif (is_array($body)) {
 			$options['form_params'] = $body;
 		}
 
 		$options['headers'] = array_merge($headers, [
 			'Accept' => 'application/json',
-		], $this->customHeaders);
+		], $this->customHeaders, $options['headers'] ?? []);
 
 		if ($this->currentUser === 'admin') {
 			$options['auth'] = ['admin', $this->adminPassword];
@@ -260,7 +273,9 @@ class NextcloudApiContext implements Context {
 		return $options;
 	}
 
-	#[Given('/^set the custom http header "([^"]*)" with "([^"]*)" as value to next request$/')]
+	/**
+	 * @Given /^set the custom http header "([^"]*)" with "([^"]*)" as value to next request$/
+	 */
 	public function setTheCustomHttpHeaderAsValueToNextRequest(string $header, string $value):void {
 		if (empty($value)) {
 			unset($this->customHeaders[$header]);
@@ -310,7 +325,9 @@ class NextcloudApiContext implements Context {
 	/**
 	 * @throws \InvalidArgumentException
 	 */
-	#[Given('the response should have a status code :code')]
+	/**
+	 * @Given the response should have a status code :code
+	 */
 	public function theResponseShouldHaveStatusCode(string $code): void {
 		$currentCode = $this->response->getStatusCode();
 		Assert::assertEquals($code, $currentCode, $this->response->getBody()->getContents());
@@ -319,7 +336,9 @@ class NextcloudApiContext implements Context {
 	/**
 	 * @throws \InvalidArgumentException
 	 */
-	#[Given('the response should be a JSON array with the following mandatory values')]
+	/**
+	 * @Given the response should be a JSON array with the following mandatory values
+	 */
 	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
 		$this->response->getBody()->seek(0);
 		$expectedValues = $table->getColumnsHash();
@@ -393,7 +412,9 @@ class NextcloudApiContext implements Context {
 		Assert::assertTrue($result, 'The jq "' . $expected . '" do not match with: ' . $actual);
 	}
 
-	#[Given('fetch field :path from previous JSON response')]
+	/**
+	 * @Given fetch field :path from previous JSON response
+	 */
 	public function fetchFieldFromPreviousJsonResponse(string $path): void {
 		$this->response->getBody()->seek(0);
 		$body = $this->response->getBody()->getContents();
@@ -424,7 +445,9 @@ class NextcloudApiContext implements Context {
 		$this->fields[$path] = $value;
 	}
 
-	#[Given('the response should contain the initial state :name with the following values:')]
+	/**
+	 * @Given the response should contain the initial state :name with the following values:
+	 */
 	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
 		$this->response->getBody()->seek(0);
 		$html = $this->response->getBody()->getContents();
@@ -453,7 +476,9 @@ class NextcloudApiContext implements Context {
 		}
 	}
 
-	#[Given('the response should contain the initial state :name json that match with:')]
+	/**
+	 * @Given the response should contain the initial state :name json that match with:
+	 */
 	public function theResponseShouldContainTheInitialStateJsonThatMatchWith(string $name, TableNode $table): void {
 		$this->response->getBody()->seek(0);
 		$html = $this->response->getBody()->getContents();
@@ -474,7 +499,9 @@ class NextcloudApiContext implements Context {
 		$this->jsonStringMatchWith($actual, $expectedValues);
 	}
 
-	#[Given('the following :appId app config is set')]
+	/**
+	 * @Given the following :appId app config is set
+	 */
 	public function setAppConfig(string $appId, TableNode $formData): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
@@ -523,7 +550,9 @@ class NextcloudApiContext implements Context {
 		return $text;
 	}
 
-	#[Given('/^run the command "(?P<command>(?:[^"]|\\")*)"$/')]
+	/**
+	 * @Given /^run the command "(?P<command>(?:[^"]|\\")*)"$/
+	 */
 	public static function runCommand(string $command): array {
 		$console = static::findParentDirContainingFile('console.php');
 		$console .= '/console.php';
@@ -593,47 +622,63 @@ class NextcloudApiContext implements Context {
 		];
 	}
 
-	#[Given('the output of the last command should contain the following text:')]
+	/**
+	 * @Given the output of the last command should contain the following text:
+	 */
 	public static function theOutputOfTheLastCommandContains(PyStringNode $text): void {
 		Assert::assertStringContainsString((string) $text, self::$commandOutput, 'The output of the last command does not contain: ' . (string) $text);
 	}
 
-	#[Given('the output of the last command should be empty')]
+	/**
+	 * @Given the output of the last command should be empty
+	 */
 	public static function theOutputOfTheLastCommandShouldBeEmpty(): void {
 		Assert::assertEmpty(self::$commandOutput, 'The output of the last command should be empty, but got: ' . self::$commandOutput);
 	}
 
-	#[Given('/^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/')]
+	/**
+	 * @Given /^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
+	 */
 	public static function runCommandWithResultCode(string $command, int $resultCode = 0): void {
 		$return = self::runCommand($command);
 		Assert::assertEquals($resultCode, $return['resultCode'], print_r($return, true));
 	}
 
-	#[Given('/^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/')]
+	/**
+	 * @Given /^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/
+	 */
 	public static function runBashCommandWithResultCode(string $command, int $resultCode = 0): void {
 		$return = self::runBashCommand($command);
 		Assert::assertEquals($resultCode, $return['resultCode'], print_r($return, true));
 	}
 
-	#[Given('create an environment :name with value :value to be used by occ command')]
+	/**
+	 * @Given create an environment :name with value :value to be used by occ command
+	 */
 	public static function createAnEnvironmentWithValueToBeUsedByOccCommand(string $name, string $value):void {
 		self::$environments[$name] = $value;
 	}
 
-	#[Given('/^wait for ([0-9]+) (second|seconds)$/')]
+	/**
+	 * @Given /^wait for ([0-9]+) (second|seconds)$/
+	 */
 	public function waitForXSecond(int $seconds): void {
 		$this->startWaitFor = $seconds;
 		sleep($seconds);
 	}
 
-	#[Given('/^past ([0-9]+) (second|seconds) since wait step$/')]
+	/**
+	 * @Given /^past ([0-9]+) (second|seconds) since wait step$/
+	 */
 	public function pastXSecondsSinceWaitStep(int $seconds): void {
 		$currentTime = time();
 		$startTime = $currentTime - $this->startWaitFor;
 		Assert::assertGreaterThanOrEqual($startTime, $currentTime, 'The current time is not greater than or equal to the start time.');
 	}
 
-	#[AfterScenario()]
+	/**
+	 * @AfterScenario
+	 */
 	public function tearDown(): void {
 		self::$environments = [];
 		foreach (self::$createdUsers as $user) {
