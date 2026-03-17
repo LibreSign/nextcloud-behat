@@ -2,7 +2,6 @@
 
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
-use Behat\Step\Given;
 use donatj\MockWebServer\MockWebServer;
 use donatj\MockWebServer\RequestInfo;
 use donatj\MockWebServer\Response as MockWebServerResponse;
@@ -23,8 +22,8 @@ final class FeatureContext extends NextcloudApiContext {
 
 	/**
 	 * @inheritDoc
+	 * @psalm-suppress MissingOverrideAttribute
 	 */
-	#[\Override]
 	public function setCurrentUser(string $user): void {
 		parent::setCurrentUser($user);
 		Assert::assertEquals($this->currentUser, $user);
@@ -32,8 +31,8 @@ final class FeatureContext extends NextcloudApiContext {
 
 	/**
 	 * @inheritDoc
+	 * @psalm-suppress MissingOverrideAttribute
 	 */
-	#[\Override]
 	public function assureUserExists(string $user): void {
 		parent::assureUserExists($user);
 		$lastRequest = $this->getLastREquest();
@@ -58,16 +57,17 @@ final class FeatureContext extends NextcloudApiContext {
 	 * When whe run the test suit of this repository at GitHub Actions, is
 	 * necessary to consider that we haven't Nextcloud installed and mock
 	 * the real path of files.
+	 * @psalm-suppress MissingOverrideAttribute
 	 */
-	#[\Override]
 	public static function findParentDirContainingFile(string $filename): string {
 		return __DIR__;
 	}
 
 	/**
 	 * @inheritDoc
+	 * @param TableNode|PyStringNode|array|null $body
+	 * @psalm-suppress MissingOverrideAttribute
 	 */
-	#[\Override]
 	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
 		parent::sendRequest($verb, $url, $body, $headers, $options);
 		$lastRequest = $this->getLastRequest();
@@ -131,7 +131,9 @@ final class FeatureContext extends NextcloudApiContext {
 		return false;
 	}
 
-	#[Given('set the response to:')]
+	/**
+	 * @Given set the response to:
+	 */
 	public function setTheResponseTo(PyStringNode $response): void {
 		// Mock response to be equal to body of request
 		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
@@ -141,8 +143,8 @@ final class FeatureContext extends NextcloudApiContext {
 
 	/**
 	 * @inheritDoc
+	 * @psalm-suppress MissingOverrideAttribute
 	 */
-	#[\Override]
 	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
 		$lastRequest = $this->getLastRequest();
 		$parsedInput = $this->getParsedInputFromRequest($lastRequest);
