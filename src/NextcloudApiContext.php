@@ -39,6 +39,8 @@ class NextcloudApiContext implements Context {
 	 * @var string[]
 	 */
 	protected static array $createdUsers = [];
+	protected static bool $shouldRestoreGuestIdHashing = false;
+	protected static ?bool $guestIdHashingOriginalValue = null;
 	protected ResponseInterface $response;
 	/** @var CookieJar[] */
 	protected $cookieJars;
@@ -74,6 +76,8 @@ class NextcloudApiContext implements Context {
 	public static function beforeScenario(): void {
 		self::$createdUsers = [];
 		self::$environments = [];
+		self::$shouldRestoreGuestIdHashing = false;
+		self::$guestIdHashingOriginalValue = null;
 	}
 
 	#[Given('as user :user')]
@@ -96,9 +100,7 @@ class NextcloudApiContext implements Context {
 
 	#[Given('guest :guest exists')]
 	public function assureGuestExists(string $guest): void {
-		// Recent guests versions hash user IDs by default, but downstream tests
-		// still authenticate using the guest identifier passed in the scenario.
-		self::runCommand('config:app:set guests hash_user_ids --value false --type boolean');
+		self::disableGuestIdHashing();
 		$response = $this->userExists($guest);
 		if ($response->getStatusCode() !== 200) {
 			static::createAnEnvironmentWithValueToBeUsedByOccCommand('OC_PASS', '123456');
@@ -116,6 +118,41 @@ class NextcloudApiContext implements Context {
 		$this->sendOCSRequest('GET', '/cloud/users/' . $user);
 		$this->setCurrentUser($currentUser);
 		return $this->response;
+	}
+
+	private static function disableGuestIdHashing(): void {
+		if (self::$shouldRestoreGuestIdHashing) {
+			return;
+		}
+
+		// nextcloud/guests 555cf1bc hashes guest IDs by default, but guest
+		// scenarios still use the raw identifier as the login/user reference.
+		$currentValue = self::runCommand('config:app:get guests hash_user_ids');
+		self::$shouldRestoreGuestIdHashing = true;
+		self::$guestIdHashingOriginalValue = $currentValue['resultCode'] === 0
+			? trim(implode("\n", $currentValue['output'])) === '1'
+			: null;
+		self::runCommandWithResultCode('config:app:set guests hash_user_ids --value false --type boolean', 0);
+	}
+
+	private static function restoreGuestIdHashing(): void {
+		if (!self::$shouldRestoreGuestIdHashing) {
+			return;
+		}
+
+		$originalValue = self::$guestIdHashingOriginalValue;
+		self::$shouldRestoreGuestIdHashing = false;
+		self::$guestIdHashingOriginalValue = null;
+
+		if ($originalValue === null) {
+			self::runCommandWithResultCode('config:app:delete guests hash_user_ids', 0);
+			return;
+		}
+
+		self::runCommandWithResultCode(
+			'config:app:set guests hash_user_ids --value ' . ($originalValue ? 'true' : 'false') . ' --type boolean',
+			0
+		);
 	}
 
 	protected function createUser(string $user): void {
@@ -645,6 +682,7 @@ class NextcloudApiContext implements Context {
 		foreach (self::$createdUsers as $user) {
 			$this->deleteUser($user);
 		}
+		self::restoreGuestIdHashing();
 	}
 
 	protected function deleteUser(string $user): ResponseInterface {
