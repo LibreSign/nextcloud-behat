@@ -64,8 +64,8 @@ Feature: Test this extension
       }
       """
     Then the response should be a JSON array with the following mandatory values
-      | key                 | value  |
-      | (jq).status.nested  | true   |
+      | key                | value |
+      | (jq).status.nested | true  |
 
   Scenario: Test response of POST is json
     When set the response to:
