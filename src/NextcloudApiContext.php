@@ -96,6 +96,9 @@ class NextcloudApiContext implements Context {
 
 	#[Given('guest :guest exists')]
 	public function assureGuestExists(string $guest): void {
+		// Recent guests versions hash user IDs by default, but downstream tests
+		// still authenticate using the guest identifier passed in the scenario.
+		self::runCommand('config:app:set guests hash_user_ids --value false --type boolean');
 		$response = $this->userExists($guest);
 		if ($response->getStatusCode() !== 200) {
 			static::createAnEnvironmentWithValueToBeUsedByOccCommand('OC_PASS', '123456');
