@@ -315,3 +315,27 @@ Feature: Test this extension
   Scenario: Wait for seconds
     When wait for 1 seconds
     When past 1 second since wait step
+
+  Scenario: Test response header assertion matches expected value
+    When set the response with "Content-Type" header "application/json" to:
+      """
+      {"ok":true}
+      """
+    And sending "POST" to "/"
+    Then the response header "Content-Type" should contain "application/json"
+
+  Scenario: Test response body is not empty
+    When set the response to:
+      """
+      hello
+      """
+    And sending "POST" to "/"
+    Then the response body should not be empty
+
+  Scenario: Test response body matches a regular expression
+    When set the response to:
+      """
+      %PDF-1.4 binary content here
+      """
+    And sending "POST" to "/"
+    Then the response body should match the regular expression "^%PDF"
