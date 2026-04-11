@@ -139,6 +139,14 @@ final class FeatureContext extends NextcloudApiContext {
 		));
 	}
 
+	#[Given('set the response with :header header :value to:')]
+	public function setTheResponseWithHeaderTo(string $header, string $value, PyStringNode $response): void {
+		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
+			(string) $response,
+			[$header => $value]
+		));
+	}
+
 	/**
 	 * @inheritDoc
 	 */

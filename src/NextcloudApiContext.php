@@ -359,6 +359,25 @@ class NextcloudApiContext implements Context {
 		Assert::assertEquals($code, $currentCode, $this->response->getBody()->getContents());
 	}
 
+	#[Given('the response header :header should contain :value')]
+	public function theResponseHeaderShouldContain(string $header, string $value): void {
+		$actual = strtolower($this->response->getHeaderLine($header));
+		Assert::assertStringContainsString(strtolower($value), $actual, sprintf('Response header "%s" does not contain "%s"', $header, $value));
+	}
+
+	#[Given('the response body should not be empty')]
+	public function theResponseBodyShouldNotBeEmpty(): void {
+		$this->response->getBody()->rewind();
+		Assert::assertNotSame('', $this->response->getBody()->getContents(), 'Response body is empty');
+	}
+
+	#[Given('the response body should match the regular expression :pattern')]
+	public function theResponseBodyShouldMatchTheRegularExpression(string $pattern): void {
+		$this->response->getBody()->rewind();
+		$content = $this->response->getBody()->getContents();
+		Assert::assertMatchesRegularExpression('#' . $pattern . '#', $content, sprintf('Response body does not match pattern "%s"', $pattern));
+	}
+
 	/**
 	 * @throws \InvalidArgumentException
 	 */
