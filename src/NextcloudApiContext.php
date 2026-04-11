@@ -361,7 +361,7 @@ class NextcloudApiContext implements Context {
 
 	#[Given('the response header :header should contain :value')]
 	public function theResponseHeaderShouldContain(string $header, string $value): void {
-		$actual = strtolower((string)$this->response->getHeaderLine($header));
+		$actual = strtolower($this->response->getHeaderLine($header));
 		Assert::assertStringContainsString(strtolower($value), $actual, sprintf('Response header "%s" does not contain "%s"', $header, $value));
 	}
 
