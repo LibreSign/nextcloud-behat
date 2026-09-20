@@ -61,13 +61,13 @@ class NextcloudApiContext implements Context {
 
 	#[BeforeSuite()]
 	public static function beforeSuite(BeforeSuiteScope $scope):void {
-		$whoami = (string) exec('whoami');
+		$whoami = (string)exec('whoami');
 		if (get_current_user() !== $whoami) {
 			$command = implode(' ', $_SERVER['argv'] ?? []);
 			throw new Exception(sprintf(
-				"Have files that %s is the owner and the user that is running this test is %s, is necessary to be the same user.\n" .
-				"You should run the follow command:\n" .
-				"runuser -u %s -- %s\n\n",
+				"Have files that %s is the owner and the user that is running this test is %s, is necessary to be the same user.\n"
+				. "You should run the follow command:\n"
+				. "runuser -u %s -- %s\n\n",
 				get_current_user(), $whoami, get_current_user(), $command));
 		}
 	}
@@ -256,7 +256,7 @@ class NextcloudApiContext implements Context {
 		}
 
 		try {
-			list($fullUrl, $options) = $this->beforeRequest($fullUrl, $options);
+			[$fullUrl, $options] = $this->beforeRequest($fullUrl, $options);
 			$options = $this->normalizePayloadForRequest($verb, $options);
 			$this->requestOptions = $options;
 			$this->response = $client->{$verb}($fullUrl, $options);
@@ -498,12 +498,12 @@ class NextcloudApiContext implements Context {
 		}
 		$element = $dom->getElementById('initial-state-' . $name);
 		if (!$element) {
-			throw new \Exception('Initial state not found: '. $name);
+			throw new \Exception('Initial state not found: ' . $name);
 		}
 		$base64 = $element->getAttribute('value');
 		$actual = base64_decode($base64);
 		$actual = $this->parseText($actual);
-		$expected = $this->parseText((string) $expected);
+		$expected = $this->parseText((string)$expected);
 		if ($this->isJson($expected)) {
 			Assert::assertJsonStringEqualsJsonString($expected, $actual);
 		} else {
@@ -527,7 +527,7 @@ class NextcloudApiContext implements Context {
 		}
 		$element = $dom->getElementById('initial-state-' . $name);
 		if (!$element) {
-			throw new \Exception('Initial state not found: '. $name);
+			throw new \Exception('Initial state not found: ' . $name);
 		}
 		$base64 = $element->getAttribute('value');
 		$actual = base64_decode($base64);
@@ -564,7 +564,7 @@ class NextcloudApiContext implements Context {
 			if (is_string($value)) {
 				$value = $this->parseText($value);
 			} elseif ($value instanceof \stdClass) {
-				$value = (array) $value;
+				$value = (array)$value;
 				$buffer = json_encode($this->parseTextRcursive($value));
 				Assert::assertIsString($buffer);
 				$value = json_decode($buffer);
@@ -657,7 +657,7 @@ class NextcloudApiContext implements Context {
 
 	#[Given('the output of the last command should contain the following text:')]
 	public static function theOutputOfTheLastCommandContains(PyStringNode $text): void {
-		Assert::assertStringContainsString((string) $text, self::$commandOutput, 'The output of the last command does not contain: ' . (string) $text);
+		Assert::assertStringContainsString((string)$text, self::$commandOutput, 'The output of the last command does not contain: ' . (string)$text);
 	}
 
 	#[Given('the output of the last command should be empty')]

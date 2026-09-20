@@ -135,14 +135,14 @@ final class FeatureContext extends NextcloudApiContext {
 	public function setTheResponseTo(PyStringNode $response): void {
 		// Mock response to be equal to body of request
 		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
-			(string) $response
+			(string)$response
 		));
 	}
 
 	#[Given('set the response with :header header :value to:')]
 	public function setTheResponseWithHeaderTo(string $header, string $value, PyStringNode $response): void {
 		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
-			(string) $response,
+			(string)$response,
 			[$header => $value]
 		));
 	}
