@@ -33,7 +33,7 @@
         "guzzlehttp/guzzle": "^7.10",
         "phpunit/phpunit": "*",
         "behat/behat": "^3.29",
-        "libresign/behat-builtin-extension": "^0.7.0",
+        "libresign/behat-builtin-extension": "^0.7.1",
         "estahn/json-query-wrapper": "*"
     },
     "require-dev": {
