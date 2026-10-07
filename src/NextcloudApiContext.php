@@ -623,15 +623,16 @@ class NextcloudApiContext implements Context {
 	 * @param array<string, string|false> $environment
 	 */
 	private static function buildEnvironmentPrefix(array $environment): string {
-		$parts = [];
+		$options = [];
+		$assignments = [];
 		foreach ($environment as $name => $value) {
 			if ($value === false) {
-				$parts[] = '-u ' . escapeshellarg($name);
+				$options[] = '-u ' . escapeshellarg($name);
 				continue;
 			}
-			$parts[] = $name . '=' . escapeshellarg($value);
+			$assignments[] = $name . '=' . escapeshellarg($value);
 		}
-		return implode(' ', $parts);
+		return implode(' ', [...$options, ...$assignments]);
 	}
 
 	public static function findParentDirContainingFile(string $filename): string {
