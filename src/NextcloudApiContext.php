@@ -2,7 +2,6 @@
 
 namespace Libresign\NextcloudBehat;
 
-use Composer\XdebugHandler\XdebugHandler;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
@@ -11,6 +10,7 @@ use Behat\Hook\BeforeScenario;
 use Behat\Hook\BeforeSuite;
 use Behat\Step\Given;
 use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
+use Composer\XdebugHandler\XdebugHandler;
 use DOMDocument;
 use Exception;
 use GuzzleHttp\Client;
