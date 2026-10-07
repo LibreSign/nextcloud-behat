@@ -2,6 +2,7 @@
 
 namespace Libresign\NextcloudBehat;
 
+use Composer\XdebugHandler\XdebugHandler;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
@@ -598,19 +599,39 @@ class NextcloudApiContext implements Context {
 			throw new \Exception('Could not retrieve owner information for UID ' . $fileOwnerUid);
 		}
 		$baseCommand = 'php ' . $console . ' ' . $command;
-		$environmentPrefix = !empty(self::$environments)
-			? http_build_query(self::$environments, '', ' ')
-			: '';
+		$commandEnvironment = self::$environments;
+		$restartSettings = XdebugHandler::getRestartSettings();
+		if ($restartSettings !== null) {
+			$commandEnvironment['PHP_INI_SCAN_DIR'] = $restartSettings['scanDir'];
+			$commandEnvironment['PHPRC'] = $restartSettings['phprc'];
+			$commandEnvironment['XDEBUG_MODE'] = 'off';
+		}
+		$environmentPrefix = self::buildEnvironmentPrefix($commandEnvironment);
 
 		if (posix_getuid() !== $owner['uid']) {
-			$fullCommand = 'runuser -u ' . $owner['name'] . ' -- '
+			$fullCommand = 'runuser -u ' . escapeshellarg($owner['name']) . ' -- '
 				. ($environmentPrefix !== '' ? 'env ' . $environmentPrefix . ' ' : '')
 				. $baseCommand;
 		} else {
-			$fullCommand = ($environmentPrefix !== '' ? $environmentPrefix . ' ' : '') . $baseCommand;
+			$fullCommand = ($environmentPrefix !== '' ? 'env ' . $environmentPrefix . ' ' : '') . $baseCommand;
 		}
 		$fullCommand .= '  2>&1';
 		return self::runBashCommand($fullCommand);
+	}
+
+	/**
+	 * @param array<string, string|false> $environment
+	 */
+	private static function buildEnvironmentPrefix(array $environment): string {
+		$parts = [];
+		foreach ($environment as $name => $value) {
+			if ($value === false) {
+				$parts[] = '-u ' . escapeshellarg($name);
+				continue;
+			}
+			$parts[] = $name . '=' . escapeshellarg($value);
+		}
+		return implode(' ', $parts);
 	}
 
 	public static function findParentDirContainingFile(string $filename): string {

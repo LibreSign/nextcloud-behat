@@ -6,7 +6,12 @@
  * the occ commands execution.
  */
 
-if (in_array('invalid-command', $argv)) {
+if (in_array('php-config', $argv, true)) {
+	echo 'scanned=' . (php_ini_scanned_files() !== false ? '1' : '0') . PHP_EOL;
+	exit;
+}
+
+if (in_array('invalid-command', $argv, true)) {
 	echo "Invalid command\n";
 	exit(1);
 }
