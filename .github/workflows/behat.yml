@@ -26,3 +26,24 @@ jobs:
 
       - name: Run behat
         run: vendor/bin/behat -f pretty --colors
+
+  xdebug-persistent-occ:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout app
+        uses: actions/checkout@v4
+
+      - name: Set up PHP with Xdebug and APCu
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: xdebug
+          extensions: apcu
+
+      - name: Set up dependencies
+        run: composer install
+
+      - name: Run Behat after persistent Xdebug restart
+        run: |
+          XDEBUG_HANDLER_DEBUG=2 vendor/bin/behat features/test.feature --name "Occ command keeps PHP configuration after persistent Xdebug restart" -f pretty --colors
