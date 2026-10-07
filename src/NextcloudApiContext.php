@@ -10,6 +10,7 @@ use Behat\Hook\BeforeScenario;
 use Behat\Hook\BeforeSuite;
 use Behat\Step\Given;
 use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
+use Composer\XdebugHandler\XdebugHandler;
 use DOMDocument;
 use Exception;
 use GuzzleHttp\Client;
@@ -598,19 +599,40 @@ class NextcloudApiContext implements Context {
 			throw new \Exception('Could not retrieve owner information for UID ' . $fileOwnerUid);
 		}
 		$baseCommand = 'php ' . $console . ' ' . $command;
-		$environmentPrefix = !empty(self::$environments)
-			? http_build_query(self::$environments, '', ' ')
-			: '';
+		$commandEnvironment = self::$environments;
+		$restartSettings = XdebugHandler::getRestartSettings();
+		if ($restartSettings !== null) {
+			$commandEnvironment['PHP_INI_SCAN_DIR'] = $restartSettings['scanDir'];
+			$commandEnvironment['PHPRC'] = $restartSettings['phprc'];
+			$commandEnvironment['XDEBUG_MODE'] = 'off';
+		}
+		$environmentPrefix = self::buildEnvironmentPrefix($commandEnvironment);
 
 		if (posix_getuid() !== $owner['uid']) {
-			$fullCommand = 'runuser -u ' . $owner['name'] . ' -- '
+			$fullCommand = 'runuser -u ' . escapeshellarg($owner['name']) . ' -- '
 				. ($environmentPrefix !== '' ? 'env ' . $environmentPrefix . ' ' : '')
 				. $baseCommand;
 		} else {
-			$fullCommand = ($environmentPrefix !== '' ? $environmentPrefix . ' ' : '') . $baseCommand;
+			$fullCommand = ($environmentPrefix !== '' ? 'env ' . $environmentPrefix . ' ' : '') . $baseCommand;
 		}
 		$fullCommand .= '  2>&1';
 		return self::runBashCommand($fullCommand);
+	}
+
+	/**
+	 * @param array<string, string|false> $environment
+	 */
+	private static function buildEnvironmentPrefix(array $environment): string {
+		$options = [];
+		$assignments = [];
+		foreach ($environment as $name => $value) {
+			if ($value === false) {
+				$options[] = '-u ' . escapeshellarg($name);
+				continue;
+			}
+			$assignments[] = $name . '=' . escapeshellarg($value);
+		}
+		return implode(' ', [...$options, ...$assignments]);
 	}
 
 	public static function findParentDirContainingFile(string $filename): string {

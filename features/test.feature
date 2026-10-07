@@ -339,3 +339,10 @@ Feature: Test this extension
       """
     And sending "POST" to "/"
     Then the response body should match the regular expression "^%PDF"
+
+  Scenario: Occ command keeps PHP configuration after persistent Xdebug restart
+    When run the command "php-config" with result code 0
+    Then the output of the last command should contain the following text:
+      """
+      scanned=1
+      """
