@@ -685,13 +685,13 @@ class NextcloudApiContext implements Context {
 		self::$environments[$name] = $value;
 	}
 
-	#[Given('/^wait for ([0-9]+) (second|seconds)$/')]
+	#[Given('/^wait for ([0-9]+) seconds?$/')]
 	public function waitForXSecond(int $seconds): void {
 		$this->startWaitFor = $seconds;
 		sleep($seconds);
 	}
 
-	#[Given('/^past ([0-9]+) (second|seconds) since wait step$/')]
+	#[Given('/^past ([0-9]+) seconds? since wait step$/')]
 	public function pastXSecondsSinceWaitStep(int $seconds): void {
 		$currentTime = time();
 		$startTime = $currentTime - $this->startWaitFor;
