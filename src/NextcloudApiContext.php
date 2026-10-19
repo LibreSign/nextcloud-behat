@@ -47,8 +47,6 @@ class NextcloudApiContext implements Context {
 	protected array $requestOptions = [];
 
 	public function __construct(?array $parameters = []) {
-		$this->server = RunServerListener::getInstance();
-		$this->baseUrl = RunServerListener::getServerRoot();
 		$this->response = new Response();
 		$this->cookieJars = [];
 		if (isset($parameters['test_password'])) {
@@ -222,6 +220,11 @@ class NextcloudApiContext implements Context {
 		}
 		if (strpos($url, '/ocs/v2.php') === false) {
 			$url = '/index.php' . $url;
+		}
+		if (!isset($this->baseUrl)) {
+			// Behat 4 may instantiate contexts before the server listener exists.
+			$this->server = RunServerListener::getInstance();
+			$this->baseUrl = RunServerListener::getServerRoot();
 		}
 		if (str_ends_with($this->baseUrl, '/')) {
 			$this->baseUrl = rtrim($this->baseUrl, '/');
