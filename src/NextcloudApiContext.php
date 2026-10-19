@@ -16,10 +16,10 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Response;
-use JsonQueryWrapper\DataTypeMapper;
 use PhpBuiltin\RunServerListener;
 use PHPUnit\Framework\Assert;
 use Psr\Http\Message\ResponseInterface;
+use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
 /**
@@ -28,8 +28,8 @@ use Symfony\Component\Process\Process;
 class NextcloudApiContext implements Context {
 	protected string $testPassword = '123456';
 	protected string $adminPassword = 'admin';
-	protected string $baseUrl;
-	protected RunServerListener $server;
+	protected string $baseUrl = '';
+	protected ?RunServerListener $server = null;
 	protected string $currentUser = '';
 	protected array $fields = [];
 	protected static array $environments = [];
@@ -223,7 +223,7 @@ class NextcloudApiContext implements Context {
 		if (strpos($url, '/ocs/v2.php') === false) {
 			$url = '/index.php' . $url;
 		}
-		if (!isset($this->baseUrl)) {
+		if ($this->baseUrl === '') {
 			// Behat 4 may instantiate contexts before the server listener exists.
 			$this->server = RunServerListener::getInstance();
 			$this->baseUrl = RunServerListener::getServerRoot();
@@ -448,18 +448,19 @@ class NextcloudApiContext implements Context {
 	 * @return mixed
 	 */
 	private function evalJsonQuery(string $jsonQuery, string $target) {
-		Assert::assertNotEmpty(`which jq`, 'Is necessary install the jq command to use jq');
 		return $this->runJsonQuery($target, $jsonQuery);
 	}
 
 	private function runJsonQuery(string $json, string $filter): mixed {
+		Assert::assertNotEmpty((new ExecutableFinder())->find('jq'), 'Is necessary install the jq command to use jq');
 		$process = new Process(['jq', '-M', $filter], null, null, $json);
 		$process->mustRun();
-		return (new DataTypeMapper())->map(trim($process->getOutput()));
+		$output = trim($process->getOutput());
+		$decoded = json_decode($output, true);
+		return json_last_error() === JSON_ERROR_NONE ? $decoded : $output;
 	}
 
 	private function validateAsJsonQuery(string $expected, string $actual): void {
-		Assert::assertNotEmpty(`which jq`, 'Is necessary install the jq command to use jq');
 		$result = $this->runJsonQuery($actual, $expected);
 		Assert::assertTrue($result, 'The jq "' . $expected . '" do not match with: ' . $actual);
 	}

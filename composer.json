@@ -34,7 +34,6 @@
         "phpunit/phpunit": "*",
         "behat/behat": "^3.29 || ^4.0",
         "libresign/behat-builtin-extension": "^0.7.1",
-        "estahn/json-query-wrapper": "*",
         "symfony/process": "^6.4 || ^7.0"
     },
     "require-dev": {
