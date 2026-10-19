@@ -16,9 +16,11 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Response;
+use JsonQueryWrapper\DataTypeMapper;
 use PhpBuiltin\RunServerListener;
 use PHPUnit\Framework\Assert;
 use Psr\Http\Message\ResponseInterface;
+use Symfony\Component\Process\Process;
 
 /**
  * Defines application features from the specific context.
@@ -447,14 +449,18 @@ class NextcloudApiContext implements Context {
 	 */
 	private function evalJsonQuery(string $jsonQuery, string $target) {
 		Assert::assertNotEmpty(`which jq`, 'Is necessary install the jq command to use jq');
-		$jq = \JsonQueryWrapper\JsonQueryFactory::createWith($target);
-		return $jq->run($jsonQuery);
+		return $this->runJsonQuery($target, $jsonQuery);
+	}
+
+	private function runJsonQuery(string $json, string $filter): mixed {
+		$process = new Process(['jq', '-M', $filter], null, null, $json);
+		$process->mustRun();
+		return (new DataTypeMapper())->map(trim($process->getOutput()));
 	}
 
 	private function validateAsJsonQuery(string $expected, string $actual): void {
 		Assert::assertNotEmpty(`which jq`, 'Is necessary install the jq command to use jq');
-		$jq = \JsonQueryWrapper\JsonQueryFactory::createWith($actual);
-		$result = $jq->run($expected);
+		$result = $this->runJsonQuery($actual, $expected);
 		Assert::assertTrue($result, 'The jq "' . $expected . '" do not match with: ' . $actual);
 	}
 
