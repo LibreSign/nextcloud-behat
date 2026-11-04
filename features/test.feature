@@ -346,3 +346,13 @@ Feature: Test this extension
       """
       scanned=1
       """
+
+  Scenario: Test jq JSON strings preserve escaped quotes
+    When set the response to:
+      """
+      {"data":{"policy":{"value":"{\"allowGroups\":[\"reviewers\"],\"denyGroups\":[]}"}}}
+      """
+    And sending "POST" to "/"
+    Then the response should be a JSON array with the following mandatory values
+      | key                     | value                                                      |
+      | (jq).data.policy.value  | {\"allowGroups\":[\"reviewers\"],\"denyGroups\":[]}        |
