@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['8.2', '8.3', '8.4', '8.5']
+        php-versions: ['8.3', '8.4', '8.5']
 
     name: php${{ matrix.php-versions }}
 
@@ -26,6 +26,9 @@ jobs:
 
       - name: Run behat
         run: vendor/bin/behat -f pretty --colors
+
+      - name: Run PHPUnit regression tests (development only)
+        run: composer run test:unit
 
   xdebug-persistent-occ:
     runs-on: ubuntu-latest

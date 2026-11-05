@@ -6,6 +6,7 @@ on:
       - '.github/workflows/**'
       - 'src/**'
       - 'features/**'
+      - 'tests/**'
       - 'vendor/**'
       - 'vendor-bin/**'
       - '.php-cs-fixer.dist.php'

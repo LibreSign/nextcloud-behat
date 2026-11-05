@@ -1,15 +1,13 @@
 # Nextcloud Behat context
 
-Basic Behat steps for a Nextcloud app
-
-This documentation describes the Behat 4 development baseline. The next major package release is tracked separately in issue #124.
+Nextcloud Behat provides reusable test steps for Nextcloud applications. Cover HTTP and OCS APIs, user provisioning, app configuration, and OCC commands without recreating common test infrastructure in each app.
 
 ## Install
 
 ```bash
 composer require --dev libresign/nextcloud-behat
 ```
-This package targets PHP 8.2 or later and Behat 4. Behat 4 uses a PHP configuration file rather than YAML. Create `behat.php` in your project's root:
+Create `behat.php` in your project's root:
 
 ```php
 <?php
@@ -51,9 +49,7 @@ class FeatureContext extends NextcloudApiContext {
 }
 ```
 
-Use the Behat 4 default Gherkin compatibility mode; no legacy parsing override is necessary.
-
-Then, now you can see all available steps:
+List the available steps:
 ```bash
 vendor/bin/behat -dl
 ```

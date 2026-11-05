@@ -356,3 +356,48 @@ Feature: Test this extension
     Then the response should be a JSON array with the following mandatory values
       | key                     | value                                                      |
       | (jq).data.policy.value  | {\"allowGroups\":[\"reviewers\"],\"denyGroups\":[]}        |
+
+  Scenario: JSON object properties compare by values instead of serialization order
+    When set the response to:
+      """
+      {"payload":{"a":1,"b":{"first":true,"second":2}}}
+      """
+    And sending "GET" to "/"
+    Then the response should be a JSON array with the following mandatory values
+      | key     | value                                   |
+      | payload | {"b":{"second":2,"first":true},"a":1} |
+
+  Scenario: OCS requests interpret key value tables as row maps
+    When sending "POST" to ocs "/apps/provisioning_api/api/v1/config/apps/demo/example"
+      | value   | enabled |
+      | visible | true    |
+
+  Scenario: OCS requests preserve raw JSON DocString bodies
+    When sending "POST" to ocs "/apps/provisioning_api/api/v1/config/apps/demo/example"
+      """
+      {"items":[{"id":2,"name":"review"}]}
+      """
+
+  Scenario: App configuration interprets tables as positional rows
+    When the following "demo" app config is set
+      | mode    | test  |
+      | enabled | true  |
+
+  Scenario: Existing account configuration steps keep their two-argument contract
+    Given as user "test"
+    When set the email of user "test" to "test@example.org"
+    And set the display name of user "test" to "Test Display"
+
+  Scenario: HTTP response status can be asserted by a Behat step
+    When sending "GET" to "/"
+    Then the response should have a status code "200"
+
+  Scenario: Command output begins empty for each scenario
+    Then the output of the last command should be empty
+
+  Scenario: Run OCC command step without a result code argument
+    When run the command "php-config"
+    Then the output of the last command should contain the following text:
+      """
+      scanned=1
+      """
