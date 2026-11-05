@@ -1,14 +1,14 @@
 <?php
 
-use Behat\Gherkin\Node\PyStringNode;
-use Behat\Gherkin\Node\TableNode;
+use Behat\Step\DataTable;
+use Behat\Step\DocString;
 use Behat\Step\Given;
 use donatj\MockWebServer\MockWebServer;
 use donatj\MockWebServer\RequestInfo;
 use donatj\MockWebServer\Response as MockWebServerResponse;
 use GuzzleHttp\Psr7\Response;
 use Libresign\NextcloudBehat\NextcloudApiContext;
-use PHPUnit\Framework\Assert;
+use Webmozart\Assert\Assert;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
@@ -27,7 +27,7 @@ final class FeatureContext extends NextcloudApiContext {
 	#[\Override]
 	public function setCurrentUser(string $user): void {
 		parent::setCurrentUser($user);
-		Assert::assertEquals($this->currentUser, $user);
+		Assert::eq($user, $this->currentUser);
 	}
 
 	/**
@@ -38,12 +38,12 @@ final class FeatureContext extends NextcloudApiContext {
 		parent::assureUserExists($user);
 		$lastRequest = $this->getLastREquest();
 		$headers = $lastRequest->getHeaders();
-		Assert::assertEquals('/ocs/v2.php/cloud/users/test', $lastRequest->getRequestUri());
-		Assert::assertArrayHasKey('OCS-ApiRequest', $headers);
-		Assert::assertEquals('true', $headers['OCS-ApiRequest']);
-		Assert::assertArrayHasKey('Authorization', $headers);
-		Assert::assertArrayHasKey('Accept', $headers);
-		Assert::assertEquals('application/json', $headers['Accept']);
+		Assert::eq($lastRequest->getRequestUri(), '/ocs/v2.php/cloud/users/test');
+		Assert::keyExists($headers, 'OCS-ApiRequest');
+		Assert::eq($headers['OCS-ApiRequest'], 'true');
+		Assert::keyExists($headers, 'Authorization');
+		Assert::keyExists($headers, 'Accept');
+		Assert::eq($headers['Accept'], 'application/json');
 	}
 
 	private function getLastRequest(): RequestInfo {
@@ -68,41 +68,41 @@ final class FeatureContext extends NextcloudApiContext {
 	 * @inheritDoc
 	 */
 	#[\Override]
-	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
+	public function sendRequest(string $verb, string $url, DataTable|DocString|array|null $body = null, array $headers = [], array $options = []): void {
 		parent::sendRequest($verb, $url, $body, $headers, $options);
 		$lastRequest = $this->getLastRequest();
 		$parsedInput = $this->getParsedInputFromRequest($lastRequest);
 
 		// Verb
-		Assert::assertEquals($verb, $lastRequest->getRequestMethod());
+		Assert::eq($lastRequest->getRequestMethod(), $verb);
 
 		// Url
 		$actual = preg_replace('/^\/index.php/', '', $lastRequest->getRequestUri());
 		$url = $this->parseText($url);
-		Assert::assertEquals($url, $actual);
+		Assert::eq($actual, $url);
 
 		// Headers
-		Assert::assertCount(
-			count($this->requestOptions['headers']),
-			array_intersect_assoc($lastRequest->getHeaders(), $this->requestOptions['headers'])
+		Assert::count(
+			array_intersect_assoc($lastRequest->getHeaders(), $this->requestOptions['headers']),
+			count($this->requestOptions['headers'])
 		);
 
 		// Form params
 		if (array_key_exists('form_params', $this->requestOptions)) {
-			Assert::assertEquals($this->requestOptions['form_params'], $parsedInput);
+			Assert::eq($parsedInput, $this->requestOptions['form_params']);
 		}
 
 		// JSON payload
 		if (array_key_exists('json', $this->requestOptions)) {
-			Assert::assertEquals($this->requestOptions['json'], $parsedInput);
+			Assert::eq($parsedInput, $this->requestOptions['json']);
 		}
 
 		// Raw body payload
 		if (array_key_exists('body', $this->requestOptions)) {
-			Assert::assertEquals($this->requestOptions['body'], $lastRequest->getInput());
-			Assert::assertStringContainsString(
-				'application/json',
-				(string)($lastRequest->getHeaders()['Content-Type'] ?? $lastRequest->getHeaders()['CONTENT_TYPE'] ?? '')
+			Assert::eq($lastRequest->getInput(), $this->requestOptions['body']);
+			Assert::contains(
+				(string)($lastRequest->getHeaders()['Content-Type'] ?? $lastRequest->getHeaders()['CONTENT_TYPE'] ?? ''),
+				'application/json'
 			);
 		}
 	}
@@ -132,7 +132,7 @@ final class FeatureContext extends NextcloudApiContext {
 	}
 
 	#[Given('set the response to:')]
-	public function setTheResponseTo(PyStringNode $response): void {
+	public function setTheResponseTo(DocString $response): void {
 		// Mock response to be equal to body of request
 		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
 			(string)$response
@@ -140,7 +140,7 @@ final class FeatureContext extends NextcloudApiContext {
 	}
 
 	#[Given('set the response with :header header :value to:')]
-	public function setTheResponseWithHeaderTo(string $header, string $value, PyStringNode $response): void {
+	public function setTheResponseWithHeaderTo(string $header, string $value, DocString $response): void {
 		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
 			(string)$response,
 			[$header => $value]
@@ -151,12 +151,12 @@ final class FeatureContext extends NextcloudApiContext {
 	 * @inheritDoc
 	 */
 	#[\Override]
-	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
+	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(DataTable $table): void {
 		$lastRequest = $this->getLastRequest();
 		$parsedInput = $this->getParsedInputFromRequest($lastRequest);
 		if ($this->hasNestedPayload($parsedInput)) {
 			$body = json_encode($parsedInput);
-			Assert::assertIsString($body);
+			Assert::string($body);
 			$this->response = new Response(200, [], $body);
 		}
 		parent::theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues($table);

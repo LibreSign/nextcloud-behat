@@ -17,6 +17,7 @@
         "bin": "echo 'bin not installed'",
         "cs:check": "php-cs-fixer fix --dry-run --diff",
         "cs:fix": "php-cs-fixer fix",
+        "test:unit": "phpunit --colors=never tests",
         "psalm": "psalm --threads=1",
         "psalm:update-baseline": "psalm --no-cache --threads=$(nproc) --update-baseline --set-baseline=psalm-baseline.xml",
         "post-install-cmd": [
@@ -31,14 +32,15 @@
     "require": {
         "php": ">=8.2",
         "guzzlehttp/guzzle": "^7.10 || ^8.0",
-        "phpunit/phpunit": "*",
         "behat/behat": "^4.0",
         "libresign/behat-builtin-extension": "^1.0",
-        "symfony/process": "^6.4 || ^7.0"
+        "symfony/process": "^6.4 || ^7.0",
+        "webmozart/assert": "^2.1"
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.9",
-        "donatj/mock-webserver": "^2.9"
+        "donatj/mock-webserver": "^2.9",
+        "phpunit/phpunit": "^11.5"
     },
     "config": {
         "allow-plugins": {

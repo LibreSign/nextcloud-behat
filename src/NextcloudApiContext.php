@@ -3,11 +3,11 @@
 namespace Libresign\NextcloudBehat;
 
 use Behat\Behat\Context\Context;
-use Behat\Gherkin\Node\PyStringNode;
-use Behat\Gherkin\Node\TableNode;
 use Behat\Hook\AfterScenario;
 use Behat\Hook\BeforeScenario;
 use Behat\Hook\BeforeSuite;
+use Behat\Step\DataTable;
+use Behat\Step\DocString;
 use Behat\Step\Given;
 use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
 use Composer\XdebugHandler\XdebugHandler;
@@ -18,10 +18,10 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Response;
 use PhpBuiltin\RunServerListener;
-use PHPUnit\Framework\Assert;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
+use Webmozart\Assert\Assert;
 
 /**
  * Defines application features from the specific context.
@@ -77,6 +77,7 @@ class NextcloudApiContext implements Context {
 	public static function beforeScenario(): void {
 		self::$createdUsers = [];
 		self::$environments = [];
+		self::$commandOutput = '';
 		self::$shouldRestoreGuestIdHashing = false;
 		self::$guestIdHashingOriginalValue = null;
 	}
@@ -201,10 +202,10 @@ class NextcloudApiContext implements Context {
 	/**
 	 * @param string $verb
 	 * @param string $url
-	 * @param TableNode|array|null $body
+	 * @param DataTable|DocString|array|null $body
 	 */
 	#[Given('sending :verb to ocs :url')]
-	public function sendOCSRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
+	public function sendOCSRequest(string $verb, string $url, DataTable|DocString|array|null $body = null, array $headers = [], array $options = []): void {
 		$url = '/ocs/v2.php' . $url;
 		$headers['OCS-ApiRequest'] = 'true';
 		$this->sendRequest($verb, $url, $body, $headers, $options);
@@ -213,11 +214,11 @@ class NextcloudApiContext implements Context {
 	/**
 	 * @param string $verb
 	 * @param string $url
-	 * @param TableNode|PyStringNode|array|null $body
+	 * @param DataTable|DocString|array|null $body
 	 * @param array $headers
 	 */
 	#[Given('sending :verb to :url')]
-	public function sendRequest(string $verb, string $url, $body = null, array $headers = [], array $options = []): void {
+	public function sendRequest(string $verb, string $url, DataTable|DocString|array|null $body = null, array $headers = [], array $options = []): void {
 		if (!str_starts_with($url, '/')) {
 			$url = '/' . $url;
 		}
@@ -240,12 +241,12 @@ class NextcloudApiContext implements Context {
 				$options
 			);
 		}
-		if ($body instanceof TableNode) {
-			$fd = $body->getRowsHash();
+		if ($body instanceof DataTable) {
+			$fd = $body->asMap();
 			$options['form_params'] = $fd;
-			$options['_decode_table_node_json'] = true;
-		} elseif ($body instanceof PyStringNode) {
-			$options['body'] = $body->getRaw();
+			$options['_decode_table_json'] = true;
+		} elseif ($body instanceof DocString) {
+			$options['body'] = $body->getContent();
 			$options['headers']['Content-Type'] = 'application/json';
 		} elseif (is_array($body)) {
 			$options['form_params'] = $body;
@@ -296,9 +297,9 @@ class NextcloudApiContext implements Context {
 		}
 
 		$encoded = json_encode($options['form_params']);
-		Assert::assertIsString($encoded);
+		Assert::string($encoded);
 		$decoded = json_decode($encoded, true);
-		Assert::assertIsArray($decoded);
+		Assert::isArray($decoded);
 
 		$options['json'] = $decoded;
 		unset($options['form_params']);
@@ -353,7 +354,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	protected function assertStatusCode(ResponseInterface $response, int $statusCode, string $message = ''): void {
-		Assert::assertEquals($statusCode, $response->getStatusCode(), $message);
+		Assert::eq($response->getStatusCode(), $statusCode, self::safeAssertionMessage($message));
 	}
 
 	/**
@@ -362,42 +363,42 @@ class NextcloudApiContext implements Context {
 	#[Given('the response should have a status code :code')]
 	public function theResponseShouldHaveStatusCode(string $code): void {
 		$currentCode = $this->response->getStatusCode();
-		Assert::assertEquals($code, $currentCode, $this->response->getBody()->getContents());
+		Assert::eq($currentCode, $code, self::safeAssertionMessage(sprintf('Expected HTTP status %s, got %d. Response body: %s', $code, $currentCode, (string)$this->response->getBody())));
 	}
 
 	#[Given('the response header :header should contain :value')]
 	public function theResponseHeaderShouldContain(string $header, string $value): void {
 		$actual = strtolower($this->response->getHeaderLine($header));
-		Assert::assertStringContainsString(strtolower($value), $actual, sprintf('Response header "%s" does not contain "%s"', $header, $value));
+		Assert::contains($actual, strtolower($value), self::safeAssertionMessage(sprintf('Response header "%s" does not contain "%s"', $header, $value)));
 	}
 
 	#[Given('the response body should not be empty')]
 	public function theResponseBodyShouldNotBeEmpty(): void {
 		$this->response->getBody()->rewind();
-		Assert::assertNotSame('', $this->response->getBody()->getContents(), 'Response body is empty');
+		Assert::notSame($this->response->getBody()->getContents(), '', 'Response body is empty');
 	}
 
 	#[Given('the response body should match the regular expression :pattern')]
 	public function theResponseBodyShouldMatchTheRegularExpression(string $pattern): void {
 		$this->response->getBody()->rewind();
 		$content = $this->response->getBody()->getContents();
-		Assert::assertMatchesRegularExpression('#' . $pattern . '#', $content, sprintf('Response body does not match pattern "%s"', $pattern));
+		Assert::regex($content, '#' . $pattern . '#', self::safeAssertionMessage(sprintf('Response body does not match pattern "%s"', $pattern)));
 	}
 
 	/**
 	 * @throws \InvalidArgumentException
 	 */
 	#[Given('the response should be a JSON array with the following mandatory values')]
-	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(TableNode $table): void {
+	public function theResponseShouldBeAJsonArrayWithTheFollowingMandatoryValues(DataTable $table): void {
 		$this->response->getBody()->seek(0);
-		$expectedValues = $table->getColumnsHash();
+		$expectedValues = $table->asMaps();
 		$json = $this->response->getBody()->getContents();
 		$this->response->getBody()->seek(0);
 		$this->jsonStringMatchWith($json, $expectedValues);
 	}
 
 	private function jsonStringMatchWith(string $json, array $expectedValues): void {
-		Assert::assertJson($json);
+		$this->decodeJson($json, 'response body');
 		foreach ($expectedValues as $value) {
 			$value['key'] = $this->parseText($value['key']);
 			$value['value'] = $this->parseText($value['value']);
@@ -409,16 +410,60 @@ class NextcloudApiContext implements Context {
 				continue;
 			}
 			if ($this->isJson($actual) && $this->isJson($value['value'])) {
-				Assert::assertJsonStringEqualsJsonString($value['value'], $actual, 'Key: ' . $value['key'] . ' JSON: ' . $json);
+				$this->assertJsonSemanticallyEquals($value['value'], $actual, 'Key: ' . $value['key'] . ' JSON: ' . $json);
 				continue;
 			}
-			Assert::assertEquals($value['value'], $actual, 'Key: ' . $value['key'] . ' JSON: ' . $json);
+			Assert::eq($actual, $value['value'], self::safeAssertionMessage('Key: ' . $value['key'] . ' expected ' . $value['value'] . ', actual ' . $actual . '. JSON: ' . $json));
 		}
+	}
+
+	/**
+	 * webmozart/assert treats a custom message as a sprintf format string.
+	 * Escape data-driven percent signs so diagnostics never mask assertion failures.
+	 */
+	private static function safeAssertionMessage(string $message): string {
+		return str_replace('%', '%%', $message);
+	}
+
+	/**
+	 * Compare JSON semantically: object property order does not matter, but array
+	 * order and JSON value types remain significant.
+	 */
+	private function assertJsonSemanticallyEquals(string $expected, string $actual, string $context = ''): void {
+		$expectedValue = $this->decodeJson($expected, 'expected JSON');
+		$actualValue = $this->decodeJson($actual, 'actual JSON');
+		$expectedCanonical = json_encode($this->sortJsonObjectKeys($expectedValue), JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION);
+		$actualCanonical = json_encode($this->sortJsonObjectKeys($actualValue), JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION);
+		Assert::same($actualCanonical, $expectedCanonical, self::safeAssertionMessage(trim($context . ' Expected JSON: ' . $expected . '; actual JSON: ' . $actual)));
+	}
+
+	private function decodeJson(string $json, string $description): mixed {
+		try {
+			return json_decode($json, false, 512, JSON_THROW_ON_ERROR);
+		} catch (\JsonException $e) {
+			throw new \InvalidArgumentException('Invalid ' . $description . ': ' . $e->getMessage() . '. Input: ' . $json, 0, $e);
+		}
+	}
+
+	private function sortJsonObjectKeys(mixed $value): mixed {
+		if ($value instanceof \stdClass) {
+			$properties = get_object_vars($value);
+			ksort($properties, SORT_STRING);
+			$sorted = new \stdClass();
+			foreach ($properties as $key => $child) {
+				$sorted->{$key} = $this->sortJsonObjectKeys($child);
+			}
+			return $sorted;
+		}
+		if (is_array($value)) {
+			return array_map($this->sortJsonObjectKeys(...), $value);
+		}
+		return $value;
 	}
 
 	private function testAndGetActualValue(array $value, string $json): string {
 		$realResponseArray = json_decode($json, true);
-		Assert::assertIsArray($realResponseArray, 'The response is not a JSON array: ' . $json);
+		Assert::isArray($realResponseArray, self::safeAssertionMessage('The response is not a JSON array: ' . $json));
 		if (str_starts_with($value['key'], '(jq)')) {
 			$actual = $this->evalJsonQuery(
 				substr($value['key'], 4),
@@ -426,21 +471,21 @@ class NextcloudApiContext implements Context {
 			);
 			if (!is_string($actual)) {
 				$actual = json_encode($actual);
-				Assert::assertIsString($actual);
+				Assert::string($actual);
 			}
 			return $actual;
 		}
 		$responseAsJsonString = json_encode($realResponseArray);
-		Assert::assertIsString($responseAsJsonString);
-		Assert::assertArrayHasKey(
-			$value['key'],
+		Assert::string($responseAsJsonString);
+		Assert::keyExists(
 			$realResponseArray,
-			'Not found: "' . $value['key'] . '" at array: ' . $responseAsJsonString
+			$value['key'],
+			self::safeAssertionMessage('Not found: "' . $value['key'] . '" at array: ' . $responseAsJsonString)
 		);
 		$actual = $realResponseArray[$value['key']];
 		if (!is_string($actual)) {
 			$actual = json_encode($actual);
-			Assert::assertIsString($actual);
+			Assert::string($actual);
 		}
 		return $actual;
 	}
@@ -453,7 +498,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	private function runJsonQuery(string $json, string $filter): mixed {
-		Assert::assertNotEmpty((new ExecutableFinder())->find('jq'), 'Is necessary install the jq command to use jq');
+		Assert::notEmpty((new ExecutableFinder())->find('jq'), 'Is necessary install the jq command to use jq');
 		$process = new Process(['jq', '-M', $filter], null, null, $json);
 		$process->mustRun();
 		$output = trim($process->getOutput());
@@ -467,7 +512,7 @@ class NextcloudApiContext implements Context {
 
 	private function validateAsJsonQuery(string $expected, string $actual): void {
 		$result = $this->runJsonQuery($actual, $expected);
-		Assert::assertTrue($result, 'The jq "' . $expected . '" do not match with: ' . $actual);
+		Assert::true($result, self::safeAssertionMessage('The jq "' . $expected . '" do not match with: ' . $actual));
 	}
 
 	#[Given('fetch field :path from previous JSON response')]
@@ -492,7 +537,7 @@ class NextcloudApiContext implements Context {
 		$keys = explode('.', $path);
 		$value = json_decode($body, true);
 		foreach ($keys as $key) {
-			Assert::assertArrayHasKey($key, $value, 'Key [' . $key . '] of path [' . $path . '] not found at body: ' . $body);
+			Assert::keyExists($value, $key, self::safeAssertionMessage('Key [' . $key . '] of path [' . $path . '] not found at body: ' . $body));
 			$value = $value[$key];
 		}
 		if (isset($alias)) {
@@ -502,7 +547,7 @@ class NextcloudApiContext implements Context {
 	}
 
 	#[Given('the response should contain the initial state :name with the following values:')]
-	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, PyStringNode $expected): void {
+	public function theResponseShouldContainTheInitialStateWithTheFollowingValues(string $name, DocString $expected): void {
 		$this->response->getBody()->seek(0);
 		$html = $this->response->getBody()->getContents();
 		$dom = new DOMDocument();
@@ -520,18 +565,18 @@ class NextcloudApiContext implements Context {
 		$actual = $this->parseText($actual);
 		$expected = $this->parseText((string)$expected);
 		if ($this->isJson($expected)) {
-			Assert::assertJsonStringEqualsJsonString($expected, $actual);
+			$this->assertJsonSemanticallyEquals($expected, $actual, 'Initial state ' . $name);
 		} else {
 			if (trim($actual, '"') === json_decode($actual) && str_starts_with($actual, '"')) {
 				$actual = trim($actual, '"');
 				$expected = trim($expected, '"');
 			}
-			Assert::assertEquals($expected, $actual);
+			Assert::eq($actual, $expected);
 		}
 	}
 
 	#[Given('the response should contain the initial state :name json that match with:')]
-	public function theResponseShouldContainTheInitialStateJsonThatMatchWith(string $name, TableNode $table): void {
+	public function theResponseShouldContainTheInitialStateJsonThatMatchWith(string $name, DataTable $table): void {
 		$this->response->getBody()->seek(0);
 		$html = $this->response->getBody()->getContents();
 		$dom = new DOMDocument();
@@ -547,15 +592,15 @@ class NextcloudApiContext implements Context {
 		$base64 = $element->getAttribute('value');
 		$actual = base64_decode($base64);
 		$actual = $this->parseText($actual);
-		$expectedValues = $table->getColumnsHash();
+		$expectedValues = $table->asMaps();
 		$this->jsonStringMatchWith($actual, $expectedValues);
 	}
 
 	#[Given('the following :appId app config is set')]
-	public function setAppConfig(string $appId, TableNode $formData): void {
+	public function setAppConfig(string $appId, DataTable $formData): void {
 		$currentUser = $this->currentUser;
 		$this->setCurrentUser('admin');
-		foreach ($formData->getRows() as $row) {
+		foreach ($formData->asLists() as $row) {
 			$this->sendOCSRequest('POST', '/apps/provisioning_api/api/v1/config/apps/' . $appId . '/' . $row[0], [
 				'value' => $row[1],
 			]);
@@ -566,11 +611,11 @@ class NextcloudApiContext implements Context {
 	protected function parseFormParams(array $options): array {
 		if (!empty($options['form_params'])) {
 			$this->parseTextRcursive($options['form_params']);
-			if (!empty($options['_decode_table_node_json'])) {
+			if (!empty($options['_decode_table_json'])) {
 				$options['form_params'] = $this->decodeIfIsJsonString($options['form_params']);
 			}
 		}
-		unset($options['_decode_table_node_json']);
+		unset($options['_decode_table_json']);
 		return $options;
 	}
 
@@ -581,7 +626,7 @@ class NextcloudApiContext implements Context {
 			} elseif ($value instanceof \stdClass) {
 				$value = (array)$value;
 				$buffer = json_encode($this->parseTextRcursive($value));
-				Assert::assertIsString($buffer);
+				Assert::string($buffer);
 				$value = json_decode($buffer);
 			}
 		});
@@ -596,7 +641,7 @@ class NextcloudApiContext implements Context {
 			$replacements[] = $value;
 		}
 		$text = preg_replace($patterns, $replacements, $text);
-		Assert::assertIsString($text);
+		Assert::string($text);
 		return $text;
 	}
 
@@ -692,25 +737,25 @@ class NextcloudApiContext implements Context {
 	}
 
 	#[Given('the output of the last command should contain the following text:')]
-	public static function theOutputOfTheLastCommandContains(PyStringNode $text): void {
-		Assert::assertStringContainsString((string)$text, self::$commandOutput, 'The output of the last command does not contain: ' . (string)$text);
+	public static function theOutputOfTheLastCommandContains(DocString $text): void {
+		Assert::contains(self::$commandOutput, (string)$text, self::safeAssertionMessage('The output of the last command does not contain: ' . (string)$text));
 	}
 
 	#[Given('the output of the last command should be empty')]
 	public static function theOutputOfTheLastCommandShouldBeEmpty(): void {
-		Assert::assertEmpty(self::$commandOutput, 'The output of the last command should be empty, but got: ' . self::$commandOutput);
+		Assert::same(self::$commandOutput, '', self::safeAssertionMessage('The output of the last command should be empty, but got: ' . self::$commandOutput));
 	}
 
 	#[Given('/^run the command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/')]
-	public static function runCommandWithResultCode(string $command, int $resultCode = 0): void {
+	public static function runCommandWithResultCode(string $command, int $resultCode): void {
 		$return = self::runCommand($command);
-		Assert::assertEquals($resultCode, $return['resultCode'], print_r($return, true));
+		Assert::eq($return['resultCode'], $resultCode, self::safeAssertionMessage(print_r($return, true)));
 	}
 
 	#[Given('/^run the bash command "(?P<command>(?:[^"]|\\")*)" with result code (\d+)$/')]
-	public static function runBashCommandWithResultCode(string $command, int $resultCode = 0): void {
+	public static function runBashCommandWithResultCode(string $command, int $resultCode): void {
 		$return = self::runBashCommand($command);
-		Assert::assertEquals($resultCode, $return['resultCode'], print_r($return, true));
+		Assert::eq($return['resultCode'], $resultCode, self::safeAssertionMessage(print_r($return, true)));
 	}
 
 	#[Given('create an environment :name with value :value to be used by occ command')]
@@ -728,7 +773,7 @@ class NextcloudApiContext implements Context {
 	public function pastXSecondsSinceWaitStep(int $seconds): void {
 		$currentTime = time();
 		$startTime = $currentTime - $this->startWaitFor;
-		Assert::assertGreaterThanOrEqual($startTime, $currentTime, 'The current time is not greater than or equal to the start time.');
+		Assert::greaterThanEq($currentTime, $startTime, 'The current time is not greater than or equal to the start time.');
 	}
 
 	#[AfterScenario()]
