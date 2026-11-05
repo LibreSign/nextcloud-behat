@@ -222,7 +222,7 @@ class NextcloudApiContext implements Context {
 		if (!str_starts_with($url, '/')) {
 			$url = '/' . $url;
 		}
-		if (strpos($url, '/ocs/v2.php') === false) {
+		if (strpos($url, '/ocs/v2.php') === false && !str_starts_with($url, '/remote.php/')) {
 			$url = '/index.php' . $url;
 		}
 		if ($this->baseUrl === '') {
@@ -266,12 +266,70 @@ class NextcloudApiContext implements Context {
 			[$fullUrl, $options] = $this->beforeRequest($fullUrl, $options);
 			$options = $this->normalizePayloadForRequest($verb, $options);
 			$this->requestOptions = $options;
-			$this->response = $client->{$verb}($fullUrl, $options);
+			$this->response = $client->request($verb, $fullUrl, $options);
 		} catch (ClientException $ex) {
 			$this->response = $ex->getResponse();
 		} catch (\GuzzleHttp\Exception\ServerException $ex) {
 			$this->response = $ex->getResponse();
 		}
+	}
+
+	/**
+	 * Send a request to the Nextcloud WebDAV endpoint using the same authentication,
+	 * response handling, and request hooks as the regular HTTP steps.
+	 */
+	#[Given('user :user sends WebDAV :method to :path')]
+	public function sendWebDavRequest(string $user, string $method, string $path, DocString|string|null $body = null, array $headers = []): void {
+		$method = strtoupper(trim($method));
+		Assert::inArray($method, ['DELETE', 'PUT', 'PROPFIND', 'GET', 'HEAD', 'MOVE', 'COPY', 'MKCOL'], 'Unsupported WebDAV method');
+
+		$this->setCurrentUser($user);
+		$path = ltrim($this->parseText($path), '/');
+		$segments = explode('/', $path);
+		foreach ($segments as $segment) {
+			if ($segment === '.' || $segment === '..') {
+				throw new \InvalidArgumentException('WebDAV paths cannot contain traversal segments');
+			}
+		}
+		$path = implode('/', array_map('rawurlencode', $segments));
+		$url = '/remote.php/dav/files/' . rawurlencode($user) . '/' . $path;
+		$options = ['headers' => ['Accept' => 'application/xml'] + $headers];
+		if ($body !== null) {
+			$options['body'] = $this->parseText($body instanceof DocString ? $body->getContent() : $body);
+		}
+		$this->sendRequest($method, $url, null, [], $options);
+	}
+
+	#[Given('the WebDAV response should contain property :property with value :value')]
+	public function theWebDavResponseShouldContainPropertyWithValue(string $property, string $value): void {
+		$actual = $this->getWebDavPropertyValue($property);
+		$expected = $this->parseText($value);
+		Assert::same($actual, $expected, self::safeAssertionMessage('WebDAV property ' . $property . ' expected ' . $expected . ', got ' . $actual));
+	}
+
+	#[Given('fetch WebDAV property :property to :alias')]
+	public function fetchWebDavPropertyTo(string $property, string $alias): void {
+		$this->fields[$alias] = $this->getWebDavPropertyValue($property);
+	}
+
+	private function getWebDavPropertyValue(string $property): string {
+		if (!preg_match('/^(?:(d|nc|oc):)?([A-Za-z_][A-Za-z0-9_.-]*)$/D', $property, $matches)) {
+			throw new \InvalidArgumentException('Invalid WebDAV property name: ' . $property);
+		}
+		$namespace = ($matches[1] ?? '') !== '' ? $matches[1] : 'nc';
+		$name = $matches[2];
+
+		Assert::eq($this->response->getStatusCode(), 207, 'Expected WebDAV HTTP 207 Multi-Status');
+		$xml = @simplexml_load_string((string)$this->response->getBody(), \SimpleXMLElement::class, LIBXML_NONET);
+		if (!$xml instanceof \SimpleXMLElement) {
+			throw new \InvalidArgumentException('Invalid XML in WebDAV response');
+		}
+		$xml->registerXPathNamespace('d', 'DAV:');
+		$xml->registerXPathNamespace('nc', 'http://nextcloud.org/ns');
+		$xml->registerXPathNamespace('oc', 'http://owncloud.org/ns');
+		$result = $xml->xpath('//' . $namespace . ':' . $name);
+		Assert::notEmpty($result, self::safeAssertionMessage('WebDAV property ' . $property . ' not found in response'));
+		return (string)$result[0];
 	}
 
 	private function normalizePayloadForRequest(string $verb, array $options): array {
