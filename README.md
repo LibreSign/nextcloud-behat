@@ -7,7 +7,7 @@ Nextcloud Behat provides reusable test steps for Nextcloud applications. Cover H
 ```bash
 composer require --dev libresign/nextcloud-behat
 ```
-This package targets PHP 8.2 or later and Behat 4. Behat 4 uses a PHP configuration file rather than YAML. Create `behat.php` in your project's root:
+This package targets PHP 8.3 or later and Behat 4. Behat 4 uses a PHP configuration file rather than YAML. Create `behat.php` in your project's root:
 
 ```php
 <?php
