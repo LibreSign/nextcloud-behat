@@ -2,45 +2,56 @@
 
 Basic Behat steps for a Nextcloud app
 
+This documentation describes the Behat 4 development baseline. The next major package release is tracked separately in issue #124.
+
 ## Install
 
 ```bash
 composer require --dev libresign/nextcloud-behat
 ```
-Create the file `behat.yml`
-```yaml
-default:
-  autoload:
-    '': '%paths.base%/features/bootstrap'
-  suites:
-    default:
-      contexts:
-        - Libresign\NextcloudBehat\NextcloudApiContext:
-            parameters:
-              # default value
-              test_password: 123456
-              # default value
-              admin_password: admin
-      # Only necessary if you want to have a different features folder
-      paths:
-        - '%paths.base%/features'
-  extensions:
-    # Use this extension to start the server
-    PhpBuiltin\Server:
-      verbose: false
-      rootDir: /var/www/html
-      host: localhost
-```
-Create the file `tests/features/bootstrap/FeatureContext.php` with this content:
+This package targets PHP 8.2 or later and Behat 4. Behat 4 uses a PHP configuration file rather than YAML. Create `behat.php` in your project's root:
+
 ```php
 <?php
 
-use Libresign\NextcloudBehat;
+use Behat\Config\Config;
+use Behat\Config\Extension;
+use Behat\Config\Profile;
+use Behat\Config\Suite;
+use PhpBuiltin\Server;
+
+return (new Config())
+    ->withProfile((new Profile('default', [
+        'autoload' => ['' => '%paths.base%/features/bootstrap'],
+    ]))
+        ->withSuite((new Suite('default'))
+            ->addContext(FeatureContext::class, [
+                'parameters' => [
+                    'test_password' => '123456',
+                    'admin_password' => 'admin',
+                ],
+            ])
+            ->withPaths('%paths.base%/features'))
+        ->withExtension(new Extension(Server::class, [
+            'verbose' => false,
+            'rootDir' => '/var/www/html', // Set this to your application's web root
+            'host' => 'localhost',
+        ])))
+;
+```
+
+Create `features/bootstrap/FeatureContext.php` with this content:
+
+```php
+<?php
+
+use Libresign\NextcloudBehat\NextcloudApiContext;
 
 class FeatureContext extends NextcloudApiContext {
-
 }
 ```
+
+Use the Behat 4 default Gherkin compatibility mode; no legacy parsing override is necessary.
 
 Then, now you can see all available steps:
 ```bash

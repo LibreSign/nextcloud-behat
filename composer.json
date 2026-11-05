@@ -32,8 +32,8 @@
         "php": ">=8.2",
         "guzzlehttp/guzzle": "^7.10 || ^8.0",
         "phpunit/phpunit": "*",
-        "behat/behat": "^3.29 || ^4.0",
-        "libresign/behat-builtin-extension": "^0.7.1",
+        "behat/behat": "^4.0",
+        "libresign/behat-builtin-extension": "^1.0",
         "symfony/process": "^6.4 || ^7.0"
     },
     "require-dev": {
