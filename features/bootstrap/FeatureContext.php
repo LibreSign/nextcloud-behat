@@ -100,11 +100,37 @@ final class FeatureContext extends NextcloudApiContext {
 		// Raw body payload
 		if (array_key_exists('body', $this->requestOptions)) {
 			Assert::eq($lastRequest->getInput(), $this->requestOptions['body']);
-			Assert::contains(
-				(string)($lastRequest->getHeaders()['Content-Type'] ?? $lastRequest->getHeaders()['CONTENT_TYPE'] ?? ''),
-				'application/json'
-			);
+			if (!str_starts_with($lastRequest->getRequestUri(), '/remote.php/dav/')) {
+				Assert::contains(
+					(string)($lastRequest->getHeaders()['Content-Type'] ?? $lastRequest->getHeaders()['CONTENT_TYPE'] ?? ''),
+					'application/json'
+				);
+			}
 		}
+	}
+
+	#[\Override]
+	public function sendWebDavRequest(string $user, string $method, string $path, DocString|string|null $body = null, array $headers = []): void {
+		parent::sendWebDavRequest($user, $method, $path, $body, $headers);
+		$request = $this->getLastRequest();
+		$segments = explode('/', ltrim($this->parseText($path), '/'));
+		$encodedPath = implode('/', array_map('rawurlencode', $segments));
+		Assert::same($request->getRequestUri(), '/remote.php/dav/files/' . rawurlencode($user) . '/' . $encodedPath);
+		Assert::same(strtoupper($request->getRequestMethod()), strtoupper($method));
+		Assert::keyExists($request->getHeaders(), 'Authorization');
+		Assert::same($request->getHeaders()['Accept'], 'application/xml');
+		if ($body !== null) {
+			Assert::same($request->getInput(), $this->parseText($body instanceof DocString ? $body->getContent() : $body));
+		}
+	}
+
+	#[Given('set the WebDAV response to:')]
+	public function setWebDavResponse(DocString $response): void {
+		$this->mockServer->setDefaultResponse(new MockWebServerResponse(
+			$response->getContent(),
+			['Content-Type' => 'application/xml'],
+			207
+		));
 	}
 
 	private function getParsedInputFromRequest(RequestInfo $requestInfo): array {
