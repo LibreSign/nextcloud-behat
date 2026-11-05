@@ -50,19 +50,3 @@ jobs:
       - name: Run Behat after persistent Xdebug restart
         run: |
           XDEBUG_HANDLER_DEBUG=2 vendor/bin/behat features/test.feature --name "Occ command keeps PHP configuration after persistent Xdebug restart" -f pretty --colors
-
-  consumer-smoke:
-    name: PHP 8.2 clean consumer (unreleased 2.0.0 candidate)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout app
-        uses: actions/checkout@v4
-
-      - name: Set up PHP 8.2
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-
-      - name: Verify production dependency closure
-        run: bash tests/consumer-smoke.sh

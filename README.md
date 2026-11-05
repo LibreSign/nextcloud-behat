@@ -1,8 +1,6 @@
 # Nextcloud Behat context
 
-Basic Behat steps for a Nextcloud app
-
-The development branch targets the upcoming **v2.0.0** contract (tracked by issue #124). Until that release is published, an unconstrained Composer install still selects the latest published 1.x release.
+Nextcloud Behat provides reusable test steps for Nextcloud applications. Cover HTTP and OCS APIs, user provisioning, app configuration, and OCC commands without recreating common test infrastructure in each app.
 
 ## Install
 
@@ -51,26 +49,7 @@ class FeatureContext extends NextcloudApiContext {
 }
 ```
 
-Use the Behat 4 default Gherkin compatibility mode; no legacy parsing override is necessary.
-
-### Migrating custom contexts to v2.0.0
-
-Step methods that accept multiline arguments must declare `Behat\Step\DataTable` and/or `Behat\Step\DocString` in their PHP parameter types. Behat 4 uses those declared types to wrap the Gherkin arguments. An untyped parameter receives the legacy AST node instead. `DataTable::asMap()` preserves two-column key/value tables; `asMaps()` preserves header-driven row records; and `asLists()` preserves positional rows, including the first row.
-
-The reusable contexts use `webmozart/assert` at runtime rather than PHPUnit. PHPUnit remains a **development-only** dependency for regression tests. JSON comparisons ignore object-property order but preserve list order and JSON types.
-
-### Validate locally
-
-```bash
-composer install
-composer run test:unit
-vendor/bin/behat --format progress
-composer run cs:check
-composer run psalm
-bash tests/consumer-smoke.sh # validates the unreleased 2.0.0 candidate from a clean PHP 8.2 consumer
-```
-
-Then, you can see the available steps:
+List the available steps:
 ```bash
 vendor/bin/behat -dl
 ```
