@@ -7,7 +7,7 @@ Nextcloud Behat provides reusable test steps for Nextcloud applications. Cover H
 ```bash
 composer require --dev libresign/nextcloud-behat
 ```
-To configure Behat 4, create `behat.php` in your project's root:
+Create `behat.php` in your project's root:
 
 ```php
 <?php
