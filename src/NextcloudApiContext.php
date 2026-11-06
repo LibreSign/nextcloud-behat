@@ -562,10 +562,6 @@ class NextcloudApiContext implements Context {
 		$process->mustRun();
 		$output = trim($process->getOutput());
 		$decoded = json_decode($output, true);
-		if (is_string($decoded)) {
-			// Preserve the escaped jq string representation used by the legacy mapper.
-			return substr($output, 1, -1);
-		}
 		return json_last_error() === JSON_ERROR_NONE ? $decoded : $output;
 	}
 
