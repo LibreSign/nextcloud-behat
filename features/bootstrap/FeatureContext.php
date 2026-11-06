@@ -74,7 +74,7 @@ final class FeatureContext extends NextcloudApiContext {
 		$parsedInput = $this->getParsedInputFromRequest($lastRequest);
 
 		// Verb
-		Assert::eq($lastRequest->getRequestMethod(), $verb);
+		Assert::eq($lastRequest->getRequestMethod(), strtoupper($verb));
 
 		// Url
 		$actual = preg_replace('/^\/index.php/', '', $lastRequest->getRequestUri());
