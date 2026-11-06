@@ -219,6 +219,7 @@ class NextcloudApiContext implements Context {
 	 */
 	#[Given('sending :verb to :url')]
 	public function sendRequest(string $verb, string $url, DataTable|DocString|array|null $body = null, array $headers = [], array $options = []): void {
+		$verb = strtoupper($verb);
 		if (!str_starts_with($url, '/')) {
 			$url = '/' . $url;
 		}
