@@ -347,7 +347,7 @@ Feature: Test this extension
       scanned=1
       """
 
-  Scenario: Test jq JSON strings preserve escaped quotes
+  Scenario: Test jq JSON strings decode escaped quotes before comparison
     When set the response to:
       """
       {"data":{"policy":{"value":"{\"allowGroups\":[\"reviewers\"],\"denyGroups\":[]}"}}}
@@ -355,7 +355,7 @@ Feature: Test this extension
     And sending "POST" to "/"
     Then the response should be a JSON array with the following mandatory values
       | key                     | value                                                      |
-      | (jq).data.policy.value  | {\"allowGroups\":[\"reviewers\"],\"denyGroups\":[]}        |
+      | (jq).data.policy.value  | {"allowGroups":["reviewers"],"denyGroups":[]}                |
 
   Scenario: JSON object properties compare by values instead of serialization order
     When set the response to:
